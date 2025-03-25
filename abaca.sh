@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 
-#OAR -l gpu=1,walltime=48:00:00
 #OAR -O ./log_%jobid%.stdout
 #OAR -E ./log_%jobid%.stderr
-#OAR -p abacus19
 #OAR -q production
 
 BASE="/home/ymerel/empenn_group_storage/private/ymerel"
