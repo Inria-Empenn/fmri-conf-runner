@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-#OAR --array 10
-#OAR -l walltime=48
+#OAR --array 40
+#OAR -l walltime=8
 #OAR -O ./log/log_%jobid%.stdout
 #OAR -E ./log/log_%jobid%.stderr
 #OAR -q production
