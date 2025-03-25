@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+#OAR -l walltime=48
 #OAR -O ./log/log_%jobid%.stdout
 #OAR -E ./log/log_%jobid%.stderr
 #OAR -q production
