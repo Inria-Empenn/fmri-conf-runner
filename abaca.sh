@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+#OAR --array 10
 #OAR -l walltime=48
 #OAR -O ./log/log_%jobid%.stdout
 #OAR -E ./log/log_%jobid%.stderr
@@ -11,7 +12,7 @@ RESULTS="$BASE/results/auditory"
 WORK="$BASE/work"
 CONFIGS="$BASE/configs"
 
-CONF="conf_test.csv"
+CONF="config_$OAR_ARRAY_INDEX.csv"
 
 # Check if a parameter is provided
 if [ -n "$1" ]; then
