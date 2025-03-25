@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-#OAR -O ./log_%jobid%.stdout
-#OAR -E ./log_%jobid%.stderr
+#OAR -O ./log/log_%jobid%.stdout
+#OAR -E ./log/log_%jobid%.stderr
 #OAR -q production
 
 BASE="/home/ymerel/empenn_group_storage/private/ymerel"
