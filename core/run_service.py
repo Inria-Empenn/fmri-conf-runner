@@ -13,9 +13,6 @@ class RunService:
 
     def run(self, data_desc: DataDescriptor, configs: List[dict], ref: Optional[dict]):
 
-        result_path = os.path.join(data_desc.result_path, datetime.now().strftime('%d%m%Y_%H%M%S'))
-        os.makedirs(result_path, exist_ok=True)
-        data_desc.result_path = result_path
         self.file_srv.write_data_descriptor(data_desc)
 
         conf_ids = []
@@ -25,10 +22,10 @@ class RunService:
             conf_ids.append('ref')
 
         size = len(configs)
-        print(f"Running [{size}] configurations to [{result_path}]...")
+        print(f"Running [{size}] configurations to [{data_desc.result_path}]...")
         for config in configs:
             hashconf = self.file_srv.hash_config(config)
-            conf_dir = os.path.join(result_path, hashconf)
+            conf_dir = os.path.join(data_desc.result_path, hashconf)
             os.makedirs(conf_dir, exist_ok=True)
             conf_ids.append(hashconf)
 

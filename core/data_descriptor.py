@@ -1,13 +1,13 @@
 class DataDescriptor:
-    data_path = ""
+    data_path: str = ""
     input = {}
-    result_path = ""
-    work_path = ""
-    task = ""
-    subjects = []
-    slices_nb = 0
-    tr = 0
-    units = ""
+    result_path: str = ""
+    work_path: str = ""
+    task: str = ""
+    subjects: list = []
+    slices_nb: int = 0
+    tr: int = 0
+    units: str = ""
 
     def __init__(self, data: {}):
         self.data_path = data["data_path"]
