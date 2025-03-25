@@ -1,0 +1,15 @@
+{
+  "data_path" : "/home/ymerel/fmri-feature-model/data/auditory",
+  "input" : {
+    "anat" : "sub-{subject_id}/anat/sub-{subject_id}_T1w.nii",
+    "func" : "sub-{subject_id}/func/sub-{subject_id}_task-auditory_bold.nii",
+    "events" : "sub-{subject_id}/func/sub-{subject_id}_task-auditory_events_corrected.tsv"
+  },
+  "result_path" : "/home/ymerel/fmri-conf-runner/results",
+  "work_path" : "/home/ymerel/fmri-conf-runner/work",
+  "task" : "auditory",
+  "subjects" : ["01"],
+  "slices_nb" : 64,
+  "tr" : 7.0,
+  "units" : "scans"
+}
