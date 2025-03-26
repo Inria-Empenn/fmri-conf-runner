@@ -10,7 +10,7 @@ TAG="fmri-confs-runner"
 
 BASE="/home/ymerel/empenn_group_storage/private/ymerel"
 DATA="$BASE/data/auditory"
-RESULTS="$BASE/results/auditory/job_$OAR_ARRAY_INDEX_$OAR_ARRAY_ID"
+RESULTS="$BASE/results/auditory/job_$OAR_JOB_INDEX-$OAR_ARRAY_INDEX"
 WORK="$BASE/work"
 CONFIGS="$BASE/configs"
 
