@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 from typing import Optional, List
 
 from core.data_descriptor import DataDescriptor
@@ -42,8 +41,6 @@ class RunService:
                 print(f"Write mean result image for configuration [{hashconf}]...")
                 self.file_srv.write_mean_image(results, os.path.join(conf_dir, MEAN_NII))
 
-        self.file_srv.merge_configs2csv(conf_ids, result_path)
-
         print(f"Running finished.")
 
     def run_ref(self, data_desc: DataDescriptor, ref: dict):
@@ -62,8 +59,9 @@ class RunService:
         for sub in data_desc.subjects:
             results.append(os.path.join(conf_dir, f'_subject_id_{sub}', RESULT_NII))
 
-        print(f"Write mean result image for configuration [{name}]...")
-        self.file_srv.write_mean_image(results, os.path.join(conf_dir, MEAN_NII))
+        if len(results) > 1:
+            print(f"Write mean result image for configuration [{name}]...")
+            self.file_srv.write_mean_image(results, os.path.join(conf_dir, MEAN_NII))
 
         print(f"Running reference configuration finished")
 

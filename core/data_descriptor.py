@@ -6,7 +6,7 @@ class DataDescriptor:
     task: str = ""
     subjects: list = []
     slices_nb: int = 0
-    tr: int = 0
+    tr: float = 0.0
     units: str = ""
 
     def __init__(self, data: {}):
