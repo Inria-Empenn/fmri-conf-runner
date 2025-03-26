@@ -10,7 +10,8 @@ TAG="fmri-confs-runner"
 
 BASE="/home/ymerel/empenn_group_storage/private/ymerel"
 DATA="$BASE/data/auditory"
-RESULTS="$BASE/results/auditory/job_$OAR_JOB_INDEX-$OAR_ARRAY_INDEX"
+RESULTS="$BASE/results/auditory/job-$OAR_ARRAY_INDEX"
+mkdir -p $RESULTS
 WORK="$BASE/work"
 CONFIGS="$BASE/configs"
 
@@ -26,10 +27,9 @@ echo "Running configuration is [$CONF]"
 
 g5k-setup-docker -t
 docker build . -t $TAG
-mkdir $RESULTS
 if [ "$OAR_ARRAY_INDEX" -eq 1 ]; then
     # write ref config only for the first job
-    docker run -u root -v "$DATA:/data" -v "$RESULTS:/results" -v "$WORK:/work" -v "$CONFIGS:/data/configs" $TAG python run.py --configs "/data/configs/$CONF" --data /data/data_desc.json
+    docker run -u root -v "$DATA:/data" -v "$RESULTS:/results" -v "$WORK:/work" -v "$CONFIGS:/data/configs" $TAG python run.py --configs "/data/configs/$CONF" --data /data/data_desc.json --ref /data/configs/config_ref.csv
 else
     docker run -u root -v "$DATA:/data" -v "$RESULTS:/results" -v "$WORK:/work" -v "$CONFIGS:/data/configs" $TAG python run.py --configs "/data/configs/$CONF" --data /data/data_desc.json
 fi
