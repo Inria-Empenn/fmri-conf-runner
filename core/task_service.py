@@ -8,9 +8,8 @@ class TaskService:
 
     def get_auditory_contrasts(self):
         return [
-        ('listening > rest', 'T', ['listening'], [1]),
-        ('rest > listening', 'T', ['listening'], [-1])
-    ]
+            ('listening > rest', 'T', ['listening'], [1])
+        ]
 
     def get_motor_contrasts(self):
         return []

@@ -120,9 +120,9 @@ class WorkflowService:
 
         # sub_level_contrasts -> output
         output = self.get_output(output_path)
-        workflow.connect(nodes['sub_level_contrasts'], SPM.EstimateContrast.Output.con_images,
+        workflow.connect(nodes['sub_level_contrasts'], SPM.EstimateContrast.Output.spmT_images,
                          output,
-                         f'{output_path}.@con_images')
+                         f'{output_path}.@spmT_images')
         print("Connecting analysis nodes...")
 
         print("Workflow ready.")
@@ -141,5 +141,5 @@ class WorkflowService:
 
     def get_output(self, path: str):
         datasink = Node(DataSink(base_directory=path), name="output")
-        datasink.inputs.regexp_substitutions = [(r'con_0001.nii', RESULT_NII)]
+        datasink.inputs.regexp_substitutions = [(r'spmT_0001.nii', RESULT_NII)]
         return datasink

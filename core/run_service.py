@@ -24,6 +24,10 @@ class RunService:
         print(f"Running [{size}] configurations to [{data_desc.result_path}]...")
         for config in configs:
             hashconf = self.file_srv.hash_config(config)
+            if self.file_srv.already_executed(data_desc, hashconf):
+                print(f"Skipping config [{hashconf}] : [result.nii] found for all [{len(data_desc.subjects)}] subjects")
+                continue
+
             conf_dir = os.path.join(data_desc.result_path, hashconf)
             os.makedirs(conf_dir, exist_ok=True)
             conf_ids.append(hashconf)
@@ -45,6 +49,11 @@ class RunService:
 
     def run_ref(self, data_desc: DataDescriptor, ref: dict):
         name = 'ref'
+
+        if self.file_srv.already_executed(data_desc, name):
+            print(f"Skipping config [{name}] : [result.nii] found for all [{len(data_desc.subjects)}] subjects")
+            return
+
         result_path = data_desc.result_path
         conf_dir = os.path.join(result_path, name)
         os.makedirs(conf_dir, exist_ok=True)
