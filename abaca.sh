@@ -28,8 +28,8 @@ g5k-setup-docker -t
 docker build . -t $TAG
 if [ "$OAR_ARRAY_INDEX" -eq 1 ]; then
     # write ref config only for the first job
-    docker run -u root -v "$DATA:/data" -v "$RESULTS:/results" -v "$WORK:/work" -v "$CONFIGS:/configs" $TAG python run.py --configs "/data/configs/$CONF" --data /data/data_desc.json --ref /data/configs/config_ref.csv
+    docker run -u root -v "$DATA:/data" -v "$RESULTS:/results" -v "$WORK:/work" -v "$CONFIGS:/configs" $TAG python run.py --configs "/configs/$CONF" --data /data/data_desc.json --ref /data/configs/config_ref.csv
 else
-    docker run -u root -v "$DATA:/data" -v "$RESULTS:/results" -v "$WORK:/work" -v "$CONFIGS:/configs" $TAG python run.py --configs "/data/configs/$CONF" --data /data/data_desc.json
+    docker run -u root -v "$DATA:/data" -v "$RESULTS:/results" -v "$WORK:/work" -v "$CONFIGS:/configs" $TAG python run.py --configs "/configs/$CONF" --data /data/data_desc.json
 fi
 
