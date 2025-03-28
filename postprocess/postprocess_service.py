@@ -27,26 +27,28 @@ class PostprocessService:
         return pd.concat(dataframes, ignore_index=True)
 
     def get_all_correlations(self, path, ids: List[str]) -> pd.DataFrame:
-        dataframe = pd.DataFrame(columns=['source', 'target', 'correlation'])
-        niis = {'ref': os.path.join(path, 'ref', '_subject_id_01', 'result.nii'),
-                'mean': os.path.join(path, 'mean_result.nii')}
-        for conf_id in ids:
-            niis[conf_id] = os.path.join(path, conf_id, '_subject_id_01', 'result.nii')
 
-        size = len(niis)
-        count = 0
-        for id_src in niis:
-            count += 1
-            for id_tgt in niis:
-                # This correlation may have already been calculated the other way
-                if ((dataframe['source'] == id_tgt) & (dataframe['target'] == id_src)).any():
-                    corr = dataframe.loc[
-                        (dataframe['source'] == id_tgt) & (dataframe['target'] == id_src), 'correlation'].values[0]
+        data = []
+        n = len(ids)
+        for i in range(n):
+            src = os.path.join(path, ids[i], '_subject_id_01', 'result.nii')
+            # Only compute for j >= i
+            for j in range(i, n):
+                if i == j:
+                    corr = 1.0
                 else:
-                    corr = self.corr_srv.get_correlation_coefficient(niis[id_tgt], niis[id_src], 'spearman')
-                pd.concat([dataframe, pd.DataFrame([{'source': id_src, 'target': id_tgt, 'correlation': corr}])],
-                          ignore_index=True)
-            print(f'Computed correlations for [{count} / {size}] images')
+                    tgt = os.path.join(path, ids[j], '_subject_id_01', 'result.nii')
+                    corr = self.corr_srv.get_correlation_coefficient(src, tgt, 'spearman')
+                data.append((ids[i], ids[j], corr))
+                if i != j:
+                    data.append((ids[j], ids[i], corr))
+            # Add correlation from mean
+            mean = os.path.join(path, 'mean_result.nii')
+            corr = self.corr_srv.get_correlation_coefficient(src, mean, 'spearman')
+            data.append((ids[i], 'mean', corr))
+            data.append(('mean', ids[i], corr))
+            print(f"Processed correlations for [{i+1} / {n}] result")
+        dataframe = pd.DataFrame(data, columns=['source', 'target', 'correlation'])
         return dataframe.sort_values(by='correlation', ascending=False)
 
     def get_mean_image(self, inputs: list, batch_size: int) -> nib.Nifti1Image:
@@ -55,7 +57,7 @@ class PostprocessService:
 
         total = len(inputs)
 
-        print(f"Summing up the [{total}] images")
+        print(f"Summing up the [{total}] images...")
         for i in range(0, total, batch_size):
             batch_paths = inputs[i:i + batch_size]
             batch_images = [nib.load(path).get_fdata() for path in batch_paths]
@@ -73,7 +75,6 @@ class PostprocessService:
                 total_sum += batch_sum
 
             count += len(batch_paths)
-            print(f"Summed [{count}] images.")
 
         print("Calculating the mean image...")
         mean_image = total_sum / count
