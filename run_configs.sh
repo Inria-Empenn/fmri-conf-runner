@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-#OAR --array 10
+#OAR --array 40
 #OAR -l walltime=4
 #OAR -O ./log/run_config_log_%jobid%.stdout
 #OAR -E ./log/run_config_log_%jobid%.stderr
 #OAR -q production
 
-TAG="fmri-confs-runner"
+TAG="fmri-confs-runner"c
 
 BASE="/home/ymerel/empenn_group_storage/private/ymerel"
 DATA="$BASE/data/auditory"
@@ -15,12 +15,6 @@ WORK="/tmp"
 CONFIGS="$BASE/configs"
 
 CONF="config_$OAR_ARRAY_INDEX.csv"
-
-# Check if a parameter is provided
-if [ -n "$1" ]; then
-  # Override CONF with the provided parameter
-  CONF=$1
-fi
 
 echo "Running configuration is [$CONF]"
 
