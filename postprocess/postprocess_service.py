@@ -33,15 +33,20 @@ class PostprocessService:
         for conf_id in ids:
             niis[conf_id] = os.path.join(path, conf_id, '_subject_id_01', 'result.nii')
 
+        size = len(niis)
+        count = 0
         for id_src in niis:
+            count += 1
             for id_tgt in niis:
                 # This correlation may have already been calculated the other way
                 if ((dataframe['source'] == id_tgt) & (dataframe['target'] == id_src)).any():
-                    corr = dataframe.loc[(dataframe['source'] == id_tgt) & (dataframe['target'] == id_src), 'correlation'].values[0]
+                    corr = dataframe.loc[
+                        (dataframe['source'] == id_tgt) & (dataframe['target'] == id_src), 'correlation'].values[0]
                 else:
                     corr = self.corr_srv.get_correlation_coefficient(niis[id_tgt], niis[id_src], 'spearman')
-                pd.concat([dataframe, pd.DataFrame([{'source': id_src, 'target': id_tgt, 'correlation': corr}])], ignore_index=True)
-
+                pd.concat([dataframe, pd.DataFrame([{'source': id_src, 'target': id_tgt, 'correlation': corr}])],
+                          ignore_index=True)
+            print(f'Computed correlations for [{count} / {size}] images')
         return dataframe.sort_values(by='correlation', ascending=False)
 
     def get_mean_image(self, inputs: list, batch_size: int) -> nib.Nifti1Image:
