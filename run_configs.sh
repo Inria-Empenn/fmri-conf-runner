@@ -25,7 +25,7 @@ fi
 echo "Running configuration is [$CONF]"
 
 g5k-setup-docker -t
-docker pull ghcr.io/inria-empenn/fmri-confs-runner:latest
+docker build . -t $TAG
 if [ "$OAR_ARRAY_INDEX" -eq 1 ]; then
     # write ref config only for the first job
     docker run -u root -v "$DATA:/data" -v "$RESULTS:/results" -v "$WORK:/work" -v "$CONFIGS:/configs" $TAG python run.py --configs "/configs/$CONF" --data /data/data_desc.json --ref /configs/config_ref.csv
