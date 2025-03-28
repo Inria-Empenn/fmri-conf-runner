@@ -57,7 +57,7 @@ class PostprocessService:
 
         total = len(inputs)
 
-        print(f"Summing up the [{total}] images...")
+        print(f"Summing the [{total}] images...")
         for i in range(0, total, batch_size):
             batch_paths = inputs[i:i + batch_size]
             batch_images = [nib.load(path).get_fdata() for path in batch_paths]
