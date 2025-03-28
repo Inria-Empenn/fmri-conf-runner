@@ -16,6 +16,7 @@ def postproc():
 
     basedir = args.results
     mean_path = os.path.join(basedir, 'mean_result.nii')
+    corr_path = os.path.join(basedir, 'correlations.csv')
     ds_path = os.path.join(basedir, 'dataset.csv')
 
     ids = []
@@ -37,9 +38,14 @@ def postproc():
     nib.save(mean_nifti_image, mean_path)
     print(f"Mean result image written to [{mean_path}]")
 
+    print(f"Computing all correlations between [{size}] results...")
+    correlations = postproc_srv.get_all_correlations(basedir, ids)
+    correlations.to_csv(corr_path, index=False, sep=';')
+    print(f"Correlations written to [{corr_path}]")
+
     print(f"Building dataset from [{size}] results...")
-    dataframe = postproc_srv.get_dataframe(basedir, ids)
-    dataframe.to_csv(ds_path, index=False, sep=';')
+    dataset = postproc_srv.get_dataset(basedir, correlations)
+    dataset.to_csv(ds_path, index=False, sep=';')
     print(f"Dataset CSV written to [{mean_path}]")
 
 

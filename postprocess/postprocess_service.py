@@ -11,20 +11,33 @@ from postprocess.correlation_service import CorrelationService
 class PostprocessService:
     corr_srv = CorrelationService()
 
-    def get_dataframe(self, path, ids: List[str]) -> pd.DataFrame:
+    def get_dataset(self, path, corr: pd.DataFrame) -> pd.DataFrame:
         dataframes = []
-        ref_contrast = os.path.join(path, 'ref', '_subject_id_01', 'result.nii')
-        mean = os.path.join(path, 'mean_result.nii')
-        for conf_id in ids:
-            contrast = os.path.join(path, conf_id, '_subject_id_01', 'result.nii')
-            config = os.path.join(path, conf_id, 'config.csv')
+        for conf_id in corr['source'].unique():
+            if conf_id == 'ref' or conf_id == 'mean':
+                continue
+            config = os.path.join(path, str(conf_id), 'config.csv')
             df = pd.read_csv(config, delimiter=';').astype(bool)
             df['id'] = conf_id
-            df['from_ref'] = self.corr_srv.get_correlation_coefficient(contrast, ref_contrast, 'spearman')
-            df['from_mean'] = self.corr_srv.get_correlation_coefficient(contrast, mean, 'spearman')
+            df['from_ref'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'ref'), 'correlation'].values[0]
+            df['from_mean'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'mean'), 'correlation'].values[0]
             dataframes.append(df)
 
         return pd.concat(dataframes, ignore_index=True)
+
+    def get_all_correlations(self, path, ids: List[str]) -> pd.DataFrame:
+        dataframes = []
+        niis = {'ref': os.path.join(path, 'ref', '_subject_id_01', 'result.nii'),
+                'mean': os.path.join(path, 'mean_result.nii')}
+        for conf_id in ids:
+            niis[conf_id] = os.path.join(path, conf_id, '_subject_id_01', 'result.nii')
+
+        for id_src in niis:
+            for id_tgt in niis:
+                corr = self.corr_srv.get_correlation_coefficient(niis[id_tgt], niis[id_src], 'spearman')
+                dataframes.append(pd.DataFrame([[id_src, id_tgt, corr]], columns=['source', 'target', 'correlation']))
+
+        return pd.concat(dataframes, ignore_index=True).sort_values(by='correlation', ascending=False)
 
     def get_mean_image(self, inputs: list, batch_size: int) -> nib.Nifti1Image:
         total_sum = None
