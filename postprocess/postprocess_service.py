@@ -20,13 +20,14 @@ class PostprocessService:
             df = pd.read_csv(config, delimiter=';').astype(bool)
             df['id'] = conf_id
             df['from_ref'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'ref'), 'correlation'].values[0]
-            df['from_mean'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'mean'), 'correlation'].values[0]
+            df['from_mean'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'mean'), 'correlation'].values[
+                0]
             dataframes.append(df)
 
         return pd.concat(dataframes, ignore_index=True)
 
     def get_all_correlations(self, path, ids: List[str]) -> pd.DataFrame:
-        dataframes = []
+        dataframe = pd.DataFrame(columns=['source', 'target', 'correlation'])
         niis = {'ref': os.path.join(path, 'ref', '_subject_id_01', 'result.nii'),
                 'mean': os.path.join(path, 'mean_result.nii')}
         for conf_id in ids:
@@ -34,16 +35,23 @@ class PostprocessService:
 
         for id_src in niis:
             for id_tgt in niis:
-                corr = self.corr_srv.get_correlation_coefficient(niis[id_tgt], niis[id_src], 'spearman')
-                dataframes.append(pd.DataFrame([[id_src, id_tgt, corr]], columns=['source', 'target', 'correlation']))
+                # This correlation may have already been calculated the other way
+                if ((dataframe['source'] == id_tgt) & (dataframe['target'] == id_src)).any():
+                    corr = dataframe.loc[(dataframe['source'] == id_tgt) & (dataframe['target'] == id_src), 'correlation'].values[0]
+                else:
+                    corr = self.corr_srv.get_correlation_coefficient(niis[id_tgt], niis[id_src], 'spearman')
+                dataframe.append({'source': id_src, 'target': id_tgt, 'correlation': corr}, ignore_index=True)
 
-        return pd.concat(dataframes, ignore_index=True).sort_values(by='correlation', ascending=False)
+        return dataframe.sort_values(by='correlation', ascending=False)
 
     def get_mean_image(self, inputs: list, batch_size: int) -> nib.Nifti1Image:
         total_sum = None
         count = 0
 
-        for i in range(0, len(inputs), batch_size):
+        total = len(inputs)
+
+        print(f"Summing up the [{total}] images")
+        for i in range(0, total, batch_size):
             batch_paths = inputs[i:i + batch_size]
             batch_images = [nib.load(path).get_fdata() for path in batch_paths]
 
@@ -60,11 +68,12 @@ class PostprocessService:
                 total_sum += batch_sum
 
             count += len(batch_paths)
+            print(f"Summed [{count}] images.")
 
-        # Calculate the mean image
+        print("Calculating the mean image...")
         mean_image = total_sum / count
 
-        # Create a new NIfTI image with the mean data
+        print("Creating a new NIfTI image with the mean data...")
         mean_nifti = nib.Nifti1Image(mean_image, affine=nib.load(inputs[0]).affine)
-
+        print("Mean image created.")
         return mean_nifti
