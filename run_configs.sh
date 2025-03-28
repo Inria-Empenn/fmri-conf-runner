@@ -6,7 +6,7 @@
 #OAR -E ./log/run_config_log_%jobid%.stderr
 #OAR -q production
 
-TAG="fmri-confs-runner"c
+TAG="fmri-confs-runner"
 
 BASE="/home/ymerel/empenn_group_storage/private/ymerel"
 DATA="$BASE/data/auditory"
@@ -26,4 +26,6 @@ if [ "$OAR_ARRAY_INDEX" -eq 1 ]; then
 else
     docker run -u root -v "$DATA:/data" -v "$RESULTS:/results" -v "$WORK:/work" -v "$CONFIGS:/configs" $TAG python run.py --configs "/configs/$CONF" --data /data/data_desc.json
 fi
+
+sudo-g5k chown -R ymerel:empenn $RESULTS
 
