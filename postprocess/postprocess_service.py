@@ -40,7 +40,7 @@ class PostprocessService:
                     corr = dataframe.loc[(dataframe['source'] == id_tgt) & (dataframe['target'] == id_src), 'correlation'].values[0]
                 else:
                     corr = self.corr_srv.get_correlation_coefficient(niis[id_tgt], niis[id_src], 'spearman')
-                dataframe.append({'source': id_src, 'target': id_tgt, 'correlation': corr}, ignore_index=True)
+                pd.concat([dataframe, pd.DataFrame([{'source': id_src, 'target': id_tgt, 'correlation': corr}])], ignore_index=True)
 
         return dataframe.sort_values(by='correlation', ascending=False)
 
