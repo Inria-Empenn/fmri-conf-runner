@@ -10,6 +10,6 @@ TAG="fmri-confs-runner"
 BASE="/home/ymerel/empenn_group_storage/private/ymerel"
 RESULTS="$BASE/auditory_276"
 
-5k-setup-docker -t
+g5k-setup-docker -t
 docker build . -t $TAG
 docker run -u root -v "$RESULTS:/results" $TAG python postprocess.py --results "/results"
