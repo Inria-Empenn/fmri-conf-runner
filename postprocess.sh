@@ -12,4 +12,4 @@ RESULTS="$BASE/auditory_276"
 
 g5k-setup-docker -t
 docker build . -t $TAG
-docker run -u root -v "$RESULTS:/results" $TAG python postprocess.py --results "/results"
+docker run -u root -v "$RESULTS:/results" $TAG python -u postprocess.py --results "/results"
