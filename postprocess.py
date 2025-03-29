@@ -46,7 +46,7 @@ def postproc():
     print(f"Building dataset from [{size}] results...")
     dataset = postproc_srv.get_dataset(basedir, correlations)
     dataset.to_csv(ds_path, index=False, sep=';')
-    print(f"Dataset CSV written to [{mean_path}]")
+    print(f"Dataset CSV written to [{ds_path}]")
 
 
 if __name__ == '__main__':
