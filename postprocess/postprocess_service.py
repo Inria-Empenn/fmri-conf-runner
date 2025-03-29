@@ -75,6 +75,7 @@ class PostprocessService:
                 total_sum += batch_sum
 
             count += len(batch_paths)
+            print(f"Summed [{count} / {total}] images")
 
         print("Calculating the mean image...")
         mean_image = total_sum / count
