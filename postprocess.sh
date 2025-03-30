@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#OAR -l walltime=15
+#OAR -l walltime=24
 #OAR -O ./log/postprocess_log_%jobid%.stdout
 #OAR -E ./log/postprocess_log_%jobid%.stderr
 #OAR -q production
