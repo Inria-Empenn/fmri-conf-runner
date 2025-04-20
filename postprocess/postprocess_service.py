@@ -102,7 +102,7 @@ class PostprocessService:
     def write_subset(self, ids: [], dataset: DataFrame, path: str, name: str):
         size = len(ids)
         ds_name = f'sub_dataset_{size}_{name}.csv'
-        mean_path = os.path.join(path, 'tmp_mean_result.nii')
+        mean_path = os.path.join(path, f'tmp_mean_result_{name}.nii')
         files = []
         for conf_id in ids:
             files.append(os.path.join(path, conf_id, '_subject_id_01', 'result.nii'))
