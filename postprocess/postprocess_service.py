@@ -5,7 +5,11 @@ import numpy as np
 import pandas as pd
 from typing import List
 
+from pandas import DataFrame
+
+from core.file_service import FileService
 from postprocess.correlation_service import CorrelationService
+from sklearn.model_selection import train_test_split
 
 
 class PostprocessService:
@@ -48,6 +52,7 @@ class PostprocessService:
             data.append((ids[i], 'mean', corr))
             data.append(('mean', ids[i], corr))
             print(f"Processed correlations for [{i+1} / {n}] result")
+        data.append(('mean', 'mean', 1.0))
         dataframe = pd.DataFrame(data, columns=['source', 'target', 'correlation'])
         return dataframe.sort_values(by='correlation', ascending=False)
 
@@ -84,3 +89,29 @@ class PostprocessService:
         mean_nifti = nib.Nifti1Image(mean_image, affine=nib.load(inputs[0]).affine)
         print("Mean image created.")
         return mean_nifti
+
+    def get_train_test(self, path: str, dataset: pd.DataFrame, train_size: float, iteration: int):
+        print(f"Iteration [{iter}] - Training size [{train_size}]")
+        X = dataset['id']
+        y = dataset['id']
+        X_id_train, X_id_test, y_id_train, y_id_test = train_test_split(X, y, train_size=train_size)
+
+        self.write_subset(X_id_train, dataset, path, f'train_{iteration}')
+        self.write_subset(X_id_test, dataset, path, f'test_{iteration}')
+
+    def write_subset(self, ids: [], dataset: DataFrame, path: str, name: str):
+        size = len(ids)
+        ds_name = f'sub_dataset_{size}_{name}.csv'
+        mean_path = os.path.join(path, 'tmp_mean_result.nii')
+        files = []
+        for conf_id in ids:
+            files.append(os.path.join(path, conf_id, '_subject_id_01', 'result.nii'))
+        mean_img = self.get_mean_image(files, 10)
+        nib.save(mean_img, mean_path)
+        print(f"Computing correlations to mean image for [{size}] results...")
+        for index, row in dataset.iterrows():
+            img = os.path.join(path, row['id'], '_subject_id_01', 'result.nii')
+            dataset.at[index, 'from_mean'] = self.corr_srv.get_correlation_coefficient(mean_path, img, 'spearman')
+        dataset.to_csv(os.path.join(path, ds_name),
+                       index=False, sep=';')
+        print(f"Written to [{ds_name}].")
