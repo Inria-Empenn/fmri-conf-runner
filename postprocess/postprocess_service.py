@@ -91,7 +91,7 @@ class PostprocessService:
         return mean_nifti
 
     def get_train_test(self, path: str, dataset: pd.DataFrame, train_size: float, iteration: int):
-        print(f"Iteration [{iter}] - Training size [{train_size}]")
+        print(f"Iteration [{iteration}] - Training size [{train_size}]")
         X = dataset['id']
         y = dataset['id']
         X_id_train, X_id_test, y_id_train, y_id_test = train_test_split(X, y, train_size=train_size)
