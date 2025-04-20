@@ -101,6 +101,7 @@ class PostprocessService:
 
     def write_subset(self, ids: [], dataset: DataFrame, path: str, name: str):
         size = len(ids)
+        filtered_ds = dataset[dataset['id'].isin(ids)]
         ds_name = f'sub_dataset_{size}_{name}.csv'
         mean_path = os.path.join(path, f'tmp_mean_result_{name}.nii')
         files = []
@@ -109,9 +110,9 @@ class PostprocessService:
         mean_img = self.get_mean_image(files, 10)
         nib.save(mean_img, mean_path)
         print(f"Computing correlations to mean image for [{size}] results...")
-        for index, row in dataset.iterrows():
+        for index, row in filtered_ds.iterrows():
             img = os.path.join(path, row['id'], '_subject_id_01', 'result.nii')
-            dataset.at[index, 'from_mean'] = self.corr_srv.get_correlation_coefficient(mean_path, img, 'spearman')
-        dataset.to_csv(os.path.join(path, ds_name),
+            filtered_ds.at[index, 'from_mean'] = self.corr_srv.get_correlation_coefficient(mean_path, img, 'spearman')
+        filtered_ds.to_csv(os.path.join(path, ds_name),
                        index=False, sep=';')
         print(f"Written to [{ds_name}].")

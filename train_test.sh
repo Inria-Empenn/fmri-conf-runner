@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-#OAR -l walltime=5
+#OAR --array 10
+#OAR -l walltime=4
 #OAR -O ./log/train_test_log_%jobid%.stdout
 #OAR -E ./log/train_test_log_%jobid%.stderr
 #OAR -q production
@@ -12,6 +13,6 @@ RESULTS="$BASE/results/auditory"
 
 g5k-setup-docker -t
 docker build . -t $TAG
-docker run -u root -v "$RESULTS:/results" $TAG python -u train_test.py --results "/results" --iter 3
+docker run -u root -v "$RESULTS:/results" $TAG python -u train_test.py --results "/results" --iter "$OAR_ARRAY_INDEX"
 
 sudo-g5k chown -R ymerel:empenn $RESULTS/*.csv
