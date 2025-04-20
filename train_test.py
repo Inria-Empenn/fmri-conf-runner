@@ -21,3 +21,6 @@ def train_test():
     for train_size in train_sizes:
         postproc_srv.get_train_test(basedir, dataset, train_size, iteration)
 
+if __name__ == '__main__':
+    train_test()
+
