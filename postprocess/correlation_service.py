@@ -56,8 +56,54 @@ class CorrelationService:
             return corrcoef(data_1, data_2)[0][1]
         if method == 'spearman':
             return spearmanr(data_1, data_2).correlation
+        if method == 'dice':
+            return self.get_dice(data_1, data_2)
+        if method == 'jaccard':
+            return self.get_jaccard(data_1, data_2)
 
         raise AttributeError(f'Wrong correlation method provided: {method}.')
+
+    def get_dice(self, data_1: np.ndarray, data_2: np.ndarray) -> float:
+        """
+        Return the DICE score between two images data
+        :param data_1:
+        :param data_2:
+        :return:
+        """
+        # Binarize
+        binary1 = data_1 > 0
+        binary2 = data_2 > 0
+
+        # Compute intersection + volumes
+        intersection = np.logical_and(binary1, binary2).sum()
+        volume = binary1.sum() + binary2.sum()
+
+        # Avoid divide by 0
+        if volume == 0:
+            return 0.0
+
+        return (2. * intersection) / volume
+
+    def get_jaccard(self, data_1: np.ndarray, data_2: np.ndarray) -> float:
+        """
+        Return the Jaccard Index between two images data
+        :param data_1:
+        :param data_2:
+        :return:
+        """
+        # Binarize
+        binary1 = data_1 > 0
+        binary2 = data_2 > 0
+
+        # Compute intersection + union
+        intersection = np.logical_and(binary1, binary2).sum()
+        union = np.logical_or(binary1, binary2).sum()
+
+        # Avoid division by zero
+        if union == 0:
+            return 0.0
+
+        return intersection / union
 
     def mask_using_zeros(self, data_image: Nifti1Image) -> Nifti1Image:
         """ Mask an image by replacing NaNs with zeros.

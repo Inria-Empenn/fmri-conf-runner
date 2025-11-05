@@ -40,20 +40,26 @@ class PostprocessService:
             for j in range(i, n):
                 if i == j:
                     corr = 1.0
+                    dice = 1.0
+                    jacc = 1.0
                 else:
                     tgt = os.path.join(path, ids[j], '_subject_id_01', 'result.nii')
                     corr = self.corr_srv.get_correlation_coefficient(src, tgt, 'spearman')
-                data.append((ids[i], ids[j], corr))
+                    dice = self.corr_srv.get_correlation_coefficient(src, tgt, 'dice')
+                    jacc = self.corr_srv.get_correlation_coefficient(src, tgt, 'jaccard')
+                data.append((ids[i], ids[j], corr, dice))
                 if i != j:
-                    data.append((ids[j], ids[i], corr))
+                    data.append((ids[j], ids[i], corr, dice, jacc))
             # Add correlation from mean
             mean = os.path.join(path, 'mean_result.nii')
             corr = self.corr_srv.get_correlation_coefficient(src, mean, 'spearman')
-            data.append((ids[i], 'mean', corr))
-            data.append(('mean', ids[i], corr))
+            dice = self.corr_srv.get_correlation_coefficient(src, tgt, 'dice')
+            jacc = self.corr_srv.get_correlation_coefficient(src, tgt, 'jaccard')
+            data.append((ids[i], 'mean', corr, dice, jacc))
+            data.append(('mean', ids[i], corr, dice, jacc))
             print(f"Processed correlations for [{i+1} / {n}] result")
-        data.append(('mean', 'mean', 1.0))
-        dataframe = pd.DataFrame(data, columns=['source', 'target', 'correlation'])
+        data.append(('mean', 'mean', 1.0, 1.0, 1.0))
+        dataframe = pd.DataFrame(data, columns=['source', 'target', 'spearman', 'dice', 'jaccard'])
         return dataframe.sort_values(by='correlation', ascending=False)
 
     def get_mean_image(self, inputs: list, batch_size: int) -> nib.Nifti1Image:
