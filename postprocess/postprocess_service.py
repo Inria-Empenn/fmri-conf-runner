@@ -23,8 +23,8 @@ class PostprocessService:
             config = os.path.join(path, str(conf_id), 'config.csv')
             df = pd.read_csv(config, delimiter=';').astype(bool)
             df['id'] = conf_id
-            df['from_ref'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'ref'), 'correlation'].values[0]
-            df['from_mean'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'mean'), 'correlation'].values[
+            df['from_ref'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'ref'), 'spearman'].values[0]
+            df['from_mean'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'mean'), 'spearman'].values[
                 0]
             dataframes.append(df)
 
@@ -60,7 +60,7 @@ class PostprocessService:
             print(f"Processed correlations for [{i+1} / {n}] result")
         data.append(('mean', 'mean', 1.0, 1.0, 1.0))
         dataframe = pd.DataFrame(data, columns=['source', 'target', 'spearman', 'dice', 'jaccard'])
-        return dataframe.sort_values(by='correlation', ascending=False)
+        return dataframe.sort_values(by='spearman', ascending=False)
 
     def get_mean_image(self, inputs: list, batch_size: int) -> nib.Nifti1Image:
         total_sum = None

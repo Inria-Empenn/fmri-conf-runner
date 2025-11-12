@@ -9,15 +9,15 @@ from typing import List
 
 
 class CorrelationService:
-    def compute_correlations(self, image, images: List[str]) -> DataFrame:
+    def compute_correlations(self, image, images: List[str], method: str = 'spearman') -> DataFrame:
         print(f"Computing correlations from [{image}] to [{len(images)}] images... ", end='')
         dfs = []
         for img in images:
-            corr = self.get_correlation_coefficient(image, img, 'spearman')
-            dfs.append(pd.DataFrame([[image, img, corr]], columns=['source', 'target', 'correlation']))
+            corr = self.get_correlation_coefficient(image, img, method)
+            dfs.append(pd.DataFrame([[image, img, corr]], columns=['source', 'target', method]))
         merged = pd.concat(dfs, ignore_index=True)
         print("OK")
-        return merged.sort_values(by='correlation', ascending=False)
+        return merged.sort_values(by=method, ascending=False)
 
     def get_correlation_coefficient(self,
             file_1: str, file_2: str, method: str = 'pearson') -> float:
