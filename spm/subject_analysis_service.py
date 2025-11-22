@@ -15,13 +15,14 @@ class SubjectAnalysisService:
     steps = [
         'sub_level_spec',
         'sub_level_design',
-        'sub_level_estimate',
+        'sub_level_model',
         'sub_level_contrasts'
     ]
 
     def get_nodes(self, features: list, data_desc: DataDescriptor) -> Dict[str, Node]:
-        nodes = {}
 
+        print("Implementing subject level analysis nodes...")
+        nodes = {}
         for step in self.steps:
             print(f"Implementing [{step}]...")
             node = self.get_node(step, features, data_desc)
@@ -32,13 +33,13 @@ class SubjectAnalysisService:
         return nodes
 
     def get_node(self, name, features: list, data_desc: DataDescriptor):
-        if name ==  'sub_level_spec':
+        if name == 'sub_level_spec':
             return self.get_model_spec(data_desc)
-        if name ==  'sub_level_design':
+        if name == 'sub_level_design':
             return self.get_design(features, data_desc)
-        if name ==  'sub_level_estimate':
-            return self.get_estimate()
-        if name ==  'sub_level_contrasts':
+        if name == 'sub_level_model':
+            return self.get_model()
+        if name == 'sub_level_contrasts':
             return self.get_contrasts(data_desc)
 
     def get_model_spec(self, data_desc: DataDescriptor):
@@ -80,8 +81,8 @@ class SubjectAnalysisService:
         design.inputs.volterra_expansion_order = 1
         return design
 
-    def get_estimate(self):
-        estimate = pe.Node(interface=EstimateModel(), name="sub_level_estimate")
+    def get_model(self):
+        estimate = Node(interface=EstimateModel(), name="sub_level_model")
         estimate.inputs.estimation_method = {'Classical': 1}
         estimate.inputs.write_residuals = True
         return estimate

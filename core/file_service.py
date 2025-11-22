@@ -21,9 +21,9 @@ CORR_REF = 'correlations_from_ref.csv'
 CORR = 'correlations.csv'
 HCP_EXCLUDED = 'excluded_subjects.csv'
 
-RESULT_NII = 'result.nii'
+RESULT_NII = 'spmT_0001.nii'
 MEAN_NII = 'mean_result.nii'
-REF_NII = 'ref_result.nii'
+CONTRAST_NII = 'con_0001.nii'
 
 
 run_pattern = '[0-3][0-9][0-1][1-9]202[0-9]_[0-2][1-9][0-5][0-9][0-5][0-9]'
@@ -128,5 +128,16 @@ class FileService:
             if not os.path.exists(result):
                 return False
         return True
+
+    def filter_processed_subjects(self, data_desc: DataDescriptor, hashconf) -> list:
+        subjects = []
+        for sub in data_desc.subjects:
+            result = os.path.join(data_desc.result_path, hashconf, f"_subject_id_{sub}", RESULT_NII)
+            contrast = os.path.join(data_desc.result_path, hashconf, f"_subject_id_{sub}", CONTRAST_NII)
+            if not os.path.exists(result) or not os.path.exists(contrast):
+                subjects.append(sub)
+            else:
+                print(f"Results found for subject [{sub}] and config [{hashconf}], skipping.")
+        return subjects
 
 

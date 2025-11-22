@@ -24,7 +24,7 @@ def postproc():
     paths = glob.glob(os.path.join(basedir, '*/'), recursive=True)
     for path in paths:
         ids.append(os.path.basename(os.path.dirname(path)))
-        results.append(os.path.join(path, '_subject_id_01', 'result.nii'))
+        results.append(os.path.join(path, 'spmT_0001.nii'))
 
     size = len(results)
     if size < 1:

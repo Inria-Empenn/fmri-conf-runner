@@ -37,6 +37,7 @@ class PreprocService:
     tpm_file = os.path.join(SPMInfo.getinfo()['path'], 'tpm', 'TPM.nii')
 
     def get_nodes(self, features: list, data_desc: DataDescriptor) -> Dict[str, Node]:
+        print("Implementing preprocessing nodes...")
         nodes = {}
         for step in self.steps:
             if step in features:

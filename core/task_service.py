@@ -12,4 +12,10 @@ class TaskService:
         ]
 
     def get_motor_contrasts(self):
-        return []
+        return [
+            # ('left_foot', 'T', ['lf'], [1]),
+            # ('left_hand', 'T', ['lh'], [1]),
+            # ('right_foot', 'T', ['rf'], [1]),
+            # ('right_hand', 'T', ['rh'], [1]),
+            ('tongue', 'T', ['t'], [1])
+        ]
