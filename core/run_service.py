@@ -15,15 +15,13 @@ class RunService:
         for sub in data_desc.subjects:
             for key, value in data_desc.input.items():
                 path = os.path.join(data_desc.data_path, value.replace('{subject_id}', sub))
-                if not os.path.exists(path):
+                if not os.path.isfile(path):
                     print(f"Input [{path}] does not exists")
                     return False
-                else:
-                    if os.path.getsize(path) <= 0:
-                        print(f"Input [{path}] is empty")
-                        return False
-                    else:
-                        return True
+                if os.path.getsize(path) == 0:
+                    print(f"Input [{path}] is empty")
+                    return False
+        return True
 
     def run(self, data_desc: DataDescriptor, configs: List[dict], ref: Optional[dict]):
 

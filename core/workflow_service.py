@@ -200,32 +200,51 @@ class WorkflowService:
         return workflow
 
     def get_infos(self, subjects):
-        infos = Node(interface=IdentityInterface(fields=['subject_id']), name="infos")
+        name = "infos"
+        print(f"Implementing [{name}]...")
+        infos = Node(interface=IdentityInterface(fields=['subject_id']), name=name)
         infos.iterables = [('subject_id', subjects)]
+        print(f"[{name}] added to workflow")
         return infos
 
     def get_subject_input(self, data_desc: DataDescriptor):
+        name = "subject_input"
+        print(f"Implementing [{name}]...")
         templates = {}
         for key, value in data_desc.input.items():
             templates[key] = os.path.join(data_desc.data_path, value)
-        return Node(interface=SelectFiles(templates, base_directory=data_desc.data_path), name="subject_input")
+        sub_input = Node(interface=SelectFiles(templates, base_directory=data_desc.data_path), name=name)
+        print(f"[{name}] added to workflow")
+        return sub_input
+
 
     def get_group_input(self, config: str, data_desc: DataDescriptor):
+        name = "group_input"
+        print(f"Implementing [{name}]...")
         templates = {}
         templates['contrasts'] = os.path.join(config, "_subject_id_*", 'con_0001.nii')
-        return Node(interface=SelectFiles(templates, base_directory=data_desc.result_path), name="group_input")
+        group_input = Node(interface=SelectFiles(templates, base_directory=data_desc.result_path), name=name)
+        print(f"[{name}] added to workflow")
+        return group_input
 
     def get_subject_output(self, path: str):
-        datasink = Node(interface=DataSink(base_directory=path), name="subject_output")
+        name = "subject_output"
+        print(f"Implementing [{name}]...")
+        datasink = Node(interface=DataSink(base_directory=path), name=name)
         datasink.inputs.regexp_substitutions = [(r'spmT_0001.nii', RESULT_NII)]
+        print(f"[{name}] added to workflow")
         return datasink
 
     def get_group_output(self, path: str):
-        datasink = Node(interface=DataSink(base_directory=path), name="group_output")
+        name = "group_output"
+        print(f"Implementing [{name}]...")
+        datasink = Node(interface=DataSink(base_directory=path), name=name)
+        print(f"[{name}] added to workflow")
         return datasink
 
     def get_gunzip(self, type: str):
-        return Node(interface=Gunzip(), name=f'gunzip_{type}')
-
-    def get_merge(self, data_desc: DataDescriptor):
-        return Node(interface=Merge(len(data_desc.subjects)), name='merge')
+        name = f'gunzip_{type}'
+        print(f"Implementing [{name}]...")
+        gz = Node(interface=Gunzip(), name=name)
+        print(f"[{name}] added to workflow")
+        return gz
