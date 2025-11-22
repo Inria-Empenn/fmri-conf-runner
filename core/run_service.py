@@ -12,16 +12,17 @@ class RunService:
     workflow_srv = WorkflowService()
 
     def check_inputs(self, data_desc: DataDescriptor):
+        ok = True
         for sub in data_desc.subjects:
             for key, value in data_desc.input.items():
                 path = os.path.join(data_desc.data_path, value.replace('{subject_id}', sub))
                 if not os.path.isfile(path):
                     print(f"Input [{path}] does not exists")
-                    return False
-                if os.path.getsize(path) == 0:
+                    ok = False
+                elif os.path.getsize(path) == 0:
                     print(f"Input [{path}] is empty")
-                    return False
-        return True
+                    ok = False
+        return ok
 
     def run(self, data_desc: DataDescriptor, configs: List[dict], ref: Optional[dict]):
 
