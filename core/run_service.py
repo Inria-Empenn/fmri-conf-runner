@@ -24,7 +24,7 @@ class RunService:
                     ok = False
         return ok
 
-    def run(self, data_desc: DataDescriptor, configs: List[dict], ref: Optional[dict]):
+    def run(self, data_desc: DataDescriptor, configs: List[dict], ref: Optional[dict], nb_procs: int):
 
         if not self.check_inputs(data_desc):
             print(f"Running interrupted.")
@@ -32,9 +32,8 @@ class RunService:
 
         self.file_srv.write_data_descriptor(data_desc)
 
-
         if ref is not None:
-            self.run_ref(data_desc, ref)
+            self.run_ref(data_desc, ref, nb_procs)
 
         total_configs = len(configs)
         total_subs = len(data_desc.subjects)
@@ -58,17 +57,17 @@ class RunService:
 
                 # subject-level
                 sub_workflow = self.workflow_srv.build_subject_workflow(config, subjects, data_desc, hashconf)
-                self.workflow_srv.run(sub_workflow, conf_dir)
+                self.workflow_srv.run(sub_workflow, conf_dir, nb_procs)
 
             if total_subs > 1:
                 # group-level
                 group_workflow = self.workflow_srv.build_group_workflow(config, data_desc, hashconf)
-                self.workflow_srv.run(group_workflow, conf_dir)
+                self.workflow_srv.run(group_workflow, conf_dir, nb_procs)
 
             cpt += 1
-            self.print_elapsed(start, hashconf)
+            self.print_elapsed(start, nb_procs, hashconf)
 
-    def run_ref(self, data_desc: DataDescriptor, ref: dict):
+    def run_ref(self, data_desc: DataDescriptor, ref: dict, nb_procs):
         name = 'ref'
         conf_dir = os.path.join(data_desc.result_path, name)
         total_subs = len(data_desc.subjects)
@@ -83,20 +82,20 @@ class RunService:
 
             # subject-level
             workflow = self.workflow_srv.build_subject_workflow(ref, subjects, data_desc, name)
-            self.workflow_srv.run(workflow, conf_dir)
+            self.workflow_srv.run(workflow, conf_dir, nb_procs)
 
         if total_subs > 1:
             # group-level
             group_workflow = self.workflow_srv.build_group_workflow(ref, data_desc, name)
-            self.workflow_srv.run(group_workflow, conf_dir)
+            self.workflow_srv.run(group_workflow, conf_dir, nb_procs)
 
-        self.print_elapsed(start, name)
+        self.print_elapsed(start, nb_procs, name)
         return conf_dir
 
-    def print_elapsed(self, start, conf):
+    def print_elapsed(self, start, nb_procs, conf):
         elapsed = time.perf_counter() - start
         HH = int(elapsed // 3600)
         MM = int((elapsed % 3600) // 60)
         SS = int(elapsed % 60)
         sss = int((elapsed * 1000) % 1000)
-        print(f"[{conf}] finished - Elapsed time [{HH:02d}:{MM:02d}:{SS:02d}.{sss:03d}]")
+        print(f"[{conf}] finished - Elapsed time [{HH:02d}:{MM:02d}:{SS:02d}.{sss:03d}] - [{nb_procs}] cores")

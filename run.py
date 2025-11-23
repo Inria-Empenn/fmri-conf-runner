@@ -1,3 +1,4 @@
+import os
 from argparse import ArgumentParser
 
 from core.run_service import RunService
@@ -28,7 +29,9 @@ def run():
         ref = file_srv.read_config(args.ref)[0]
 
     data_desc = file_srv.read_data_descriptor(args.data)
-    run_srv.run(data_desc, configs, ref)
+    nb_procs = len(os.sched_getaffinity(0))
+    print(f"[{nb_procs}] cores available")
+    run_srv.run(data_desc, configs, ref, nb_procs)
 
 
 if __name__ == '__main__':

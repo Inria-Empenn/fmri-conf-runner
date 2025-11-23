@@ -19,10 +19,8 @@ class WorkflowService:
 
     PLUGIN = 'MultiProc'
 
-    def run(self, workflow: Workflow, path: str, ):
+    def run(self, workflow: Workflow, path: str, nb_procs):
         print(f"Workflow [{workflow.name}] running...")
-        nb_procs = len(os.sched_getaffinity(0))
-        print(f"[{nb_procs}] cores available for [{self.PLUGIN}]")
         workflow.run('MultiProc', plugin_args = {'n_procs': nb_procs})
         print(f"Workflow results written to [{path}].")
 
