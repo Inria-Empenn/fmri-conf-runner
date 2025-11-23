@@ -17,9 +17,13 @@ class WorkflowService:
     sub_analysis_srv = SubjectAnalysisService()
     group_analysis_srv = GroupAnalysisService()
 
+    PLUGIN = 'MultiProc'
+
     def run(self, workflow: Workflow, path: str, ):
         print(f"Workflow [{workflow.name}] running...")
-        workflow.run()
+        nb_procs = len(os.sched_getaffinity(0))
+        print(f"[{nb_procs}] cores available for [{self.PLUGIN}]")
+        workflow.run('MultiProc', plugin_args = {'n_procs': nb_procs})
         print(f"Workflow results written to [{path}].")
 
     def build_subject_workflow(self, config: dict, subjects: list, data_descriptor: DataDescriptor, name: str) -> Workflow:
