@@ -39,6 +39,9 @@ class RunService:
         total_configs = len(configs)
         total_subs = len(data_desc.subjects)
 
+        if total_configs == 0:
+            return
+
         cpt = 1
         print(f"Running [{total_configs}] configurations for [{total_subs}] subjects to [{data_desc.result_path}]...")
         for config in configs:
