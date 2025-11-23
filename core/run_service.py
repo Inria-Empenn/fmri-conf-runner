@@ -82,7 +82,7 @@ class RunService:
             self.file_srv.write_config2csv(ref, os.path.join(conf_dir, CONFIG_CSV))
 
             # subject-level
-            workflow = self.workflow_srv.build_subject_workflow(ref, data_desc, name)
+            workflow = self.workflow_srv.build_subject_workflow(ref, subjects, data_desc, name)
             self.workflow_srv.run(workflow, conf_dir)
 
         if total_subs > 1:
