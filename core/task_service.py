@@ -5,6 +5,9 @@ class TaskService:
             return self.get_auditory_contrasts()
         if name.lower() == "motor":
             return self.get_motor_contrasts()
+        if name.lower() == "emotion":
+            return self.get_emotion_contrasts()
+        print(f"Task [{name.lower()}] contrasts are not implemented.")
 
     def get_auditory_contrasts(self):
         return [
@@ -18,4 +21,9 @@ class TaskService:
             # ('right_foot', 'T', ['rf'], [1]),
             # ('tongue', 'T', ['t'], [1]),
             ('right_hand', 'T', ['rh'], [1])
+        ]
+
+    def get_emotion_contrasts(self):
+        return [
+            ('fear > neutral', 'T', ['fear', 'neut'], [1, -1])
         ]

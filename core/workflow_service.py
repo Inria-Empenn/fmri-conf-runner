@@ -143,7 +143,7 @@ class WorkflowService:
                          nodes['sub_level_contrasts'], SPM.EstimateContrast.Input.spm_mat_file)
         workflow.connect(nodes['sub_level_model'], SPM.EstimateModel.Output.beta_images,
                          nodes['sub_level_contrasts'], SPM.EstimateContrast.Input.beta_images)
-        workflow.connect(nodes['sub_level_model'], SPM.EstimateModel.Output.residual_image,
+        workflow.connect(func2bidsnodes['sub_level_model'], SPM.EstimateModel.Output.residual_image,
                          nodes['sub_level_contrasts'], SPM.EstimateContrast.Input.residual_image)
 
         output = self.get_subject_output(output_path)
