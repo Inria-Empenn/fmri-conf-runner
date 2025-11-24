@@ -1,11 +1,13 @@
 import os
 from argparse import ArgumentParser
+from datetime import datetime
 
 from core.run_service import RunService
 from core.file_service import FileService
 
 
 def run():
+
     file_srv = FileService()
     run_srv = RunService()
 
@@ -35,4 +37,6 @@ def run():
 
 
 if __name__ == '__main__':
+    print(f"Start [{datetime.now().strftime("%d-%m-%Y %H:%M:%S.%f")[:-3]}]")
     run()
+    print(f"End [{datetime.now().strftime("%d-%m-%Y %H:%M:%S.%f")[:-3]}]")
