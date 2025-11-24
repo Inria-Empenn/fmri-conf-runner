@@ -37,6 +37,8 @@ def run():
 
 
 if __name__ == '__main__':
-    print(f"Start [{datetime.now().strftime("%d-%m-%Y %H:%M:%S.%f")[:-3]}]")
+    now = datetime.now().strftime("%d-%m-%Y %H:%M:%S.%f")[:-3]
+    print(f"Start [{now}]")
     run()
-    print(f"End [{datetime.now().strftime("%d-%m-%Y %H:%M:%S.%f")[:-3]}]")
+    now = datetime.now().strftime("%d-%m-%Y %H:%M:%S.%f")[:-3]
+    print(f"End [{now}]")
