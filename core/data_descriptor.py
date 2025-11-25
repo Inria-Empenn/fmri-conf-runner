@@ -5,6 +5,7 @@ class DataDescriptor:
     work_path: str = ""
     task: str = ""
     subjects: list = []
+    no_group_subjects: list = []
     slices_nb: int = 0
     tr: float = 0.0
     units: str = ""
@@ -16,6 +17,7 @@ class DataDescriptor:
         self.work_path = data["work_path"]
         self.task = data["task"]
         self.subjects = data["subjects"]
+        self.no_group_subjects = data["no_group_subjects"]
         self.slices_nb = data["slices_nb"]
         self.tr = data["tr"]
         self.units = data["units"]

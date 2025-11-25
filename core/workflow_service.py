@@ -229,7 +229,8 @@ class WorkflowService:
         )
         contrasts = []
         for subject in data_desc.subjects:
-            contrasts.append(os.path.join(data_desc.result_path, config, f'_subject_id_{subject}', CONTRAST_NII))
+            if subject not in data_desc.no_group_subjects:
+                contrasts.append(os.path.join(data_desc.result_path, config, f'_subject_id_{subject}', CONTRAST_NII))
         group_input.inputs.contrasts = contrasts
         print(f"[{name}] added to workflow")
         return group_input
