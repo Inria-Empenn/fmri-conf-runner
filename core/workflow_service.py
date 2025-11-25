@@ -6,7 +6,7 @@ from nipype.algorithms.misc import Gunzip
 
 from core.constants import SPM
 from core.data_descriptor import DataDescriptor
-from core.file_service import RESULT_NII
+from core.file_service import RESULT_NII, CONTRAST_NII
 from spm.group_analysis_service import GroupAnalysisService
 from spm.preproc_service import PreprocService
 from spm.subject_analysis_service import SubjectAnalysisService
@@ -173,12 +173,9 @@ class WorkflowService:
 
         workflow.base_dir = data_descriptor.work_path
 
-        src_infos = self.get_infos(data_descriptor.subjects)
         inputs = self.get_group_input(name, data_descriptor)
 
         print("Connecting group-level analysis nodes...")
-
-        workflow.connect(src_infos, 'subject_id', inputs, 'subject_id')
 
         # group_input -> group_level_design
         workflow.connect(inputs, 'contrasts',
@@ -226,9 +223,14 @@ class WorkflowService:
     def get_group_input(self, config: str, data_desc: DataDescriptor):
         name = "group_input"
         print(f"Implementing [{name}]...")
-        templates = {}
-        templates['contrasts'] = os.path.join(config, "_subject_id_{subject_id}", 'con_0001.nii')
-        group_input = Node(interface=SelectFiles(templates, base_directory=data_desc.result_path), name=name)
+        group_input = Node(
+            IdentityInterface(fields=['contrasts']),
+            name=name
+        )
+        contrasts = []
+        for subject in data_desc.subjects:
+            contrasts.append(os.path.join(data_desc.result_path, config, f'_subject_id_{subject}', CONTRAST_NII))
+        group_input.inputs.contrasts = contrasts
         print(f"[{name}] added to workflow")
         return group_input
 
