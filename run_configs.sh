@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-#OAR --array 10
-#OAR -l walltime=6
-#OAR -O ./log/run_configs_%jobname%_%jobid%.stdout
-#OAR -E ./log/run_configs_%jobname%_%jobid%.stderr
+#OAR --array 200
+#OAR -l walltime=3
+#OAR -O /home/ymerel/empenn_group_storage/private/ymerel/results/log/run_configs_%jobname%_%jobid%.stdout
+#OAR -E /home/ymerel/empenn_group_storage/private/ymerel/results/log/run_configs_%jobname%_%jobid%.stderr
 #OAR -q production
 
 TAG="ghcr.io/inria-empenn/fmri-confs-runner:latest"
