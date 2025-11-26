@@ -51,7 +51,6 @@ class RunService:
             start = time.perf_counter()
 
             subjects = self.file_srv.filter_processed_subjects(data_desc, hashconf)
-            subjects = []
             if len(subjects) > 0:
                 os.makedirs(conf_dir, exist_ok=True)
                 self.file_srv.write_config2csv(config, os.path.join(conf_dir, CONFIG_CSV))
