@@ -16,12 +16,11 @@ RESULTS="$BASE/results/$SUBDIR"
 WORK="/tmp"
 CONFIGS="$BASE/configs/$SUBDIR"
 
-CONF="config_$OAR_ARRAY_INDEX.csv"
+CONF="ref"
 
 echo "Running configuration is [$CONF]"
 
 g5k-setup-docker -t
-docker run -u root -v "$DATA:/data" -v "$RESULTS:/results" -v "$WORK:/work" -v "$CONFIGS:/configs" $TAG python -u run.py --configs "/configs/$CONF" --data /configs/data_desc.json
-
+docker run -u root -v "$DATA:/data" -v "$RESULTS:/results" -v "$WORK:/work" -v "$CONFIGS:/configs" $TAG python -u run.py --data /configs/data_desc.json --ref /configs/config_ref.csv
 sudo-g5k chown -R ymerel:empenn "$RESULTS"
 
