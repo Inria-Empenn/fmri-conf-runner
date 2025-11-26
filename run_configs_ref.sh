@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
-#OAR --array 10
-#OAR -l walltime=6
-#OAR -O ./log/run_config_log_%jobid%.stdout
-#OAR -E ./log/run_config_log_%jobid%.stderr
+#OAR -l walltime=1
+#OAR -O ./log/run_configs_ref_%jobname%_%jobid%.stdout
+#OAR -E ./log/run_configs_ref_%jobname%_%jobid%.stderr
 #OAR -q production
 
 TAG="ghcr.io/inria-empenn/fmri-confs-runner:latest"
