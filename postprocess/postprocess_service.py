@@ -32,7 +32,6 @@ class PostprocessService:
         return pd.concat(dataframes, ignore_index=True)
 
     def get_pairwise_correlation(self, src, tgt, path):
-        print("running")
         if src == tgt:
             return src, tgt, 1.0, 1.0, 1.0, 1.0
         else:
