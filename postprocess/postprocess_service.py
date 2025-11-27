@@ -1,4 +1,5 @@
 import os
+from multiprocessing import Pool
 
 import nibabel as nib
 import numpy as np
@@ -7,7 +8,7 @@ from typing import List
 
 from pandas import DataFrame
 
-from core.file_service import FileService
+from core.file_service import FileService, RESULT_NII, MEAN_NII
 from postprocess.correlation_service import CorrelationService
 from sklearn.model_selection import train_test_split
 
@@ -30,36 +31,38 @@ class PostprocessService:
 
         return pd.concat(dataframes, ignore_index=True)
 
+    def get_pairwise_correlation(self, src, tgt, path):
+        print("running")
+        if src == tgt:
+            return src, tgt, 1.0, 1.0, 1.0, 1.0
+        else:
+            src_nii = os.path.join(path, src, RESULT_NII) if src != 'mean' else os.path.join(path, MEAN_NII)
+            tgt_nii = os.path.join(path, tgt, RESULT_NII) if tgt != 'mean' else os.path.join(path, MEAN_NII)
+            spear = self.corr_srv.get_correlation_coefficient(src_nii, tgt_nii, 'spearman')
+            pear = self.corr_srv.get_correlation_coefficient(src_nii, tgt_nii, 'pearson')
+            dice = self.corr_srv.get_correlation_coefficient(src_nii, tgt_nii, 'dice')
+            jacc = self.corr_srv.get_correlation_coefficient(src_nii, tgt_nii, 'jaccard')
+            return src, tgt, spear, pear, dice, jacc
+
     def get_all_correlations(self, path, ids: List[str]) -> pd.DataFrame:
+        ids.append('mean')
+        n = len(ids)
+
+        args = []
+        for i in range(n):
+            for j in range(i, n):
+                args.append((ids[i], ids[j], path))
+
+        with Pool(processes=n) as pool:
+            results = pool.starmap(self.get_pairwise_correlation, args)
 
         data = []
-        n = len(ids)
-        for i in range(n):
-            src = os.path.join(path, ids[i], '_subject_id_01', 'result.nii')
-            # Only compute for j >= i
-            for j in range(i, n):
-                if i == j:
-                    corr = 1.0
-                    dice = 1.0
-                    jacc = 1.0
-                else:
-                    tgt = os.path.join(path, ids[j], '_subject_id_01', 'result.nii')
-                    corr = self.corr_srv.get_correlation_coefficient(src, tgt, 'spearman')
-                    dice = self.corr_srv.get_correlation_coefficient(src, tgt, 'dice')
-                    jacc = self.corr_srv.get_correlation_coefficient(src, tgt, 'jaccard')
-                data.append((ids[i], ids[j], corr, dice))
-                if i != j:
-                    data.append((ids[j], ids[i], corr, dice, jacc))
-            # Add correlation from mean
-            mean = os.path.join(path, 'mean_result.nii')
-            corr = self.corr_srv.get_correlation_coefficient(src, mean, 'spearman')
-            dice = self.corr_srv.get_correlation_coefficient(src, tgt, 'dice')
-            jacc = self.corr_srv.get_correlation_coefficient(src, tgt, 'jaccard')
-            data.append((ids[i], 'mean', corr, dice, jacc))
-            data.append(('mean', ids[i], corr, dice, jacc))
-            print(f"Processed correlations for [{i+1} / {n}] result")
-        data.append(('mean', 'mean', 1.0, 1.0, 1.0))
-        dataframe = pd.DataFrame(data, columns=['source', 'target', 'spearman', 'dice', 'jaccard'])
+        for result in results:
+            data.append(result)
+            if result[0] != result[1]:
+                data.append((result[1], result[0], result[2], result[3], result[4], result[5]))
+
+        dataframe = pd.DataFrame(data, columns=['source', 'target', 'spearman', 'pearson', 'dice', 'jaccard'])
         return dataframe.sort_values(by='spearman', ascending=False)
 
     def get_mean_image(self, inputs: list, batch_size: int) -> nib.Nifti1Image:

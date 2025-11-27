@@ -1,6 +1,7 @@
 import glob
 import os
 from argparse import ArgumentParser
+from datetime import datetime
 
 import nibabel as nib
 
@@ -50,4 +51,9 @@ def postproc():
 
 
 if __name__ == '__main__':
+    now = datetime.now().strftime("%d-%m-%Y %H:%M:%S.%f")[:-3]
+    print(f"Start [{now}]")
+    print(f"[{len(os.sched_getaffinity(0))}] cores available")
     postproc()
+    now = datetime.now().strftime("%d-%m-%Y %H:%M:%S.%f")[:-3]
+    print(f"End [{now}]")
