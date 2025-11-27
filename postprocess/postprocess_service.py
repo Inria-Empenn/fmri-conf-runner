@@ -46,6 +46,7 @@ class PostprocessService:
 
     def get_all_correlations(self, path, ids: List[str], nb_cores: int) -> pd.DataFrame:
         ids.append('mean')
+        n = len(ids)
 
         args = []
         for i in range(n):
