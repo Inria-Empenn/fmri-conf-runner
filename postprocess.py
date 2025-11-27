@@ -40,7 +40,9 @@ def postproc():
     print(f"Mean result image written to [{mean_path}]")
 
     print(f"Computing all correlations between [{size}] results...")
-    correlations = postproc_srv.get_all_correlations(basedir, ids)
+    nb_cores = len(os.sched_getaffinity(0))
+    print(f"[{nb_cores}] cores available")
+    correlations = postproc_srv.get_all_correlations(basedir, ids, nb_cores)
     correlations.to_csv(corr_path, index=False, sep=';')
     print(f"Correlations written to [{corr_path}]")
 
@@ -53,7 +55,6 @@ def postproc():
 if __name__ == '__main__':
     now = datetime.now().strftime("%d-%m-%Y %H:%M:%S.%f")[:-3]
     print(f"Start [{now}]")
-    print(f"[{len(os.sched_getaffinity(0))}] cores available")
     postproc()
     now = datetime.now().strftime("%d-%m-%Y %H:%M:%S.%f")[:-3]
     print(f"End [{now}]")

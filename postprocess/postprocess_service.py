@@ -44,16 +44,15 @@ class PostprocessService:
             jacc = self.corr_srv.get_correlation_coefficient(src_nii, tgt_nii, 'jaccard')
             return src, tgt, spear, pear, dice, jacc
 
-    def get_all_correlations(self, path, ids: List[str]) -> pd.DataFrame:
+    def get_all_correlations(self, path, ids: List[str], nb_cores: int) -> pd.DataFrame:
         ids.append('mean')
-        n = len(ids)
 
         args = []
         for i in range(n):
             for j in range(i, n):
                 args.append((ids[i], ids[j], path))
 
-        with Pool(processes=n) as pool:
+        with Pool(processes=nb_cores) as pool:
             results = pool.starmap(self.get_pairwise_correlation, args)
 
         data = []
