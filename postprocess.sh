@@ -2,7 +2,7 @@
 
 #OAR -l walltime=4
 #OAR -O /home/ymerel/empenn_group_storage/private/ymerel/results/log/postprocess_%jobname%_%jobid%.stdout
-#OAR -E /home/ymerel/empenn_group_storage/private/ymerel/results/log/postprocess__%jobname%_%jobid%.stderr
+#OAR -E /home/ymerel/empenn_group_storage/private/ymerel/results/log/postprocess_%jobname%_%jobid%.stderr
 #OAR -q production
 
 TAG="ghcr.io/inria-empenn/fmri-confs-runner:latest"
