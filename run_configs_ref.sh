@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 #OAR -l walltime=1
-#OAR -O /home/ymerel/empenn_group_storage/private/ymerel/results/log/run_configs_%jobname%_%jobid%.stdout
-#OAR -E /home/ymerel/empenn_group_storage/private/ymerel/results/log/run_configs_%jobname%_%jobid%.stderr
+#OAR -O /home/ymerel/empenn_group_storage/private/ymerel/results/log/run_configs_ref_%jobname%_%jobid%.stdout
+#OAR -E /home/ymerel/empenn_group_storage/private/ymerel/results/log/run_configs_ref_%jobname%_%jobid%.stderr
 #OAR -q production
 
 TAG="ghcr.io/inria-empenn/fmri-confs-runner:latest"
