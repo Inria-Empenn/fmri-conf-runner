@@ -14,5 +14,4 @@ RESULTS="$BASE/results/$SUBDIR"
 g5k-setup-docker -t
 docker run -u root -v "$RESULTS:/results" $TAG python -u postprocess.py --results "/results"
 
-sudo-g5k chown -R ymerel:empenn "$RESULTS/*.csv"
-sudo-g5k chown -R ymerel:empenn "$RESULTS/*.nii"
+sudo-g5k chown -R ymerel:empenn "$RESULTS"
