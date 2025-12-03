@@ -25,8 +25,7 @@ class PostprocessService:
             df = pd.read_csv(config, delimiter=';').astype(bool)
             df['id'] = conf_id
             df['from_ref'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'ref'), 'spearman'].values[0]
-            df['from_mean'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'mean'), 'spearman'].values[
-                0]
+            df['from_mean'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'mean'), 'spearman'].values[0]
             dataframes.append(df)
 
         return pd.concat(dataframes, ignore_index=True)

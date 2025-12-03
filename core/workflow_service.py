@@ -126,9 +126,13 @@ class WorkflowService:
         workflow.connect(nodes['spatial_smoothing'], SPM.Smooth.Output.smoothed_files,
                          nodes['sub_level_spec'], 'functional_runs')
 
-        # motion_correction_realignment -> sub_level_spec
-        workflow.connect(nodes['motion_correction_realignment'], SPM.Realign.Output.realignment_parameters,
-                         nodes['sub_level_spec'], "realignment_parameters")
+        if "sub_level_spec_realignment_parameters" in nodes:
+            # motion_correction_realignment -> sub_level_spec_realignment_parameters
+            workflow.connect(nodes['motion_correction_realignment'], SPM.Realign.Output.realignment_parameters,
+                             nodes['sub_level_spec_realignment_parameters'], "realignment_parameters")
+            # sub_level_spec_realignment_parameters -> sub_level_spec
+            workflow.connect(nodes['sub_level_spec_realignment_parameters'], "realignment_parameters",
+                             nodes['sub_level_spec'], "realignment_parameters")
 
         # sub_level_spec -> sub_level_design
         workflow.connect(nodes['sub_level_spec'], 'session_info',

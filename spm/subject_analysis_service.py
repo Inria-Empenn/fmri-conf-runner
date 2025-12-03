@@ -1,5 +1,5 @@
 import nipype.pipeline.engine as pe  # pypeline engine
-from nipype import Node
+from nipype import Node, Function
 from nipype.algorithms.modelgen import SpecifySPMModel
 from nipype.interfaces.spm import EstimateModel, Level1Design, EstimateContrast
 from typing import Dict
@@ -9,14 +9,14 @@ from core.task_service import TaskService
 
 
 class SubjectAnalysisService:
-
     task_srv = TaskService()
 
     steps = [
         'sub_level_spec',
         'sub_level_design',
         'sub_level_model',
-        'sub_level_contrasts'
+        'sub_level_contrasts',
+        'sub_level_spec_realignment_parameters'
     ]
 
     def get_nodes(self, features: list, data_desc: DataDescriptor) -> Dict[str, Node]:
@@ -24,6 +24,9 @@ class SubjectAnalysisService:
         print("Implementing subject level analysis nodes...")
         nodes = {}
         for step in self.steps:
+            if step == 'sub_level_spec_realignment_parameters':
+                if f"signal_modeling/nuisance_regressors" not in features:
+                    continue
             print(f"Implementing [{step}]...")
             node = self.get_node(step, features, data_desc)
             if node:
@@ -41,6 +44,8 @@ class SubjectAnalysisService:
             return self.get_model()
         if name == 'sub_level_contrasts':
             return self.get_contrasts(data_desc)
+        if name == 'sub_level_spec_realignment_parameters':
+            return self.get_realignment_parameters(features)
 
     def get_model_spec(self, data_desc: DataDescriptor):
         modelspec = Node(interface=SpecifySPMModel(), name="sub_level_spec")
@@ -91,3 +96,40 @@ class SubjectAnalysisService:
         contrast = pe.Node(interface=EstimateContrast(), name="sub_level_contrasts")
         contrast.inputs.contrasts = self.task_srv.get_task_contrasts(data_desc.task)
         return contrast
+
+    def get_realignment_parameters(self, features):
+        name = "signal_modeling/nuisance_regressors"
+
+        def get_motions_files(realignment_parameters, nb_regressors):
+            import numpy as np
+            output_file = f"{realignment_parameters}.done"
+            motion = np.loadtxt(realignment_parameters)
+            if nb_regressors == 6:
+                expanded = motion
+            elif nb_regressors == 18:
+                derivatives = np.diff(motion, axis=0, prepend=0)
+                expanded = np.column_stack((motion, derivatives, motion ** 2))
+            elif nb_regressors == 24:
+                derivatives = np.diff(motion, axis=0, prepend=0)
+                squared_derivatives = derivatives ** 2
+                expanded = np.column_stack((motion, derivatives, motion ** 2, squared_derivatives))
+            else:
+                raise ValueError(f"[{nb_regressors}] regressors not implemented")
+            np.savetxt(output_file, expanded)
+            return output_file
+
+        nuisance_regressors = pe.Node(interface=Function(
+            input_names=['realignment_parameters', 'nb_regressors'],
+            output_names=['realignment_parameters'],
+            function=get_motions_files
+        ),
+            name='sub_level_spec_realignment_parameters'
+        )
+        nuisance_regressors.inputs.nb_regressors = float(self.get_feature_end(f"{name}/motion", features))
+        return nuisance_regressors
+
+    def get_feature_end(self, prefix, features):
+        for feature in features:
+            if feature.startswith(prefix + '/'):
+                return feature[len(prefix + '/'):]
+        return ""

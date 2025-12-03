@@ -34,6 +34,12 @@ class PreprocService:
         'normalised_cross_correlation': 'ncc'
     }
 
+    interpolation = {
+        "nearest_neighbour" : 0,
+        "trilinear" : 1,
+        "bspline": 4
+    }
+
     tpm_file = os.path.join(SPMInfo.getinfo()['path'], 'tpm', 'TPM.nii')
 
     def get_nodes(self, features: list, data_desc: DataDescriptor) -> Dict[str, Node]:
@@ -134,6 +140,10 @@ class PreprocService:
             node.inputs.bias_fwhm = float(self.get_feature_end(f"{name}/bias_fwhm", features))
         else:
             node.inputs.bias_fwhm = "Inf"
+
+        if f"{name}/interpolation" in features:
+            node.inputs.write_interp = self.interpolation[
+                self.get_feature_end(f"{name}/interpolation", features)]
 
         return node
 
