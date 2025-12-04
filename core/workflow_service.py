@@ -81,8 +81,15 @@ class WorkflowService:
             workflow.connect(nodes['motion_correction_realignment'], SPM.Realign.Output.realigned_files,
                              nodes['spatial_normalization'], SPM.Normalize.Input.apply_to_files)
 
-        func_input = SPM.Coregister.Input.target
-        anat_input = SPM.Coregister.Input.source
+
+        if "coregistration/source_target/anat_on_func" in features:
+            # anat_on_func
+            func_input = SPM.Coregister.Input.target
+            anat_input = SPM.Coregister.Input.source
+        else:
+            # func_on_anat
+            func_input = SPM.Coregister.Input.source
+            anat_input = SPM.Coregister.Input.target
 
         # motion_correction_realignment -> coregistration
         workflow.connect(nodes['motion_correction_realignment'], SPM.Realign.Output.mean_image,
