@@ -19,33 +19,29 @@ class PostprocessService:
     def get_dataset(self, path, corr: pd.DataFrame) -> pd.DataFrame:
         dataframes = []
         for conf_id in corr['source'].unique():
-            if conf_id == 'ref' or conf_id == 'mean':
+            if conf_id == 'mean':
                 continue
             config = os.path.join(path, str(conf_id), 'config.csv')
             df = pd.read_csv(config, delimiter=';').astype(bool)
             df['id'] = conf_id
             df['pearson_from_ref'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'ref'), 'pearson'].values[0]
-            df['pearson_from_mean'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'mean'), 'pearson'].values[0]
             df['spearman_from_ref'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'ref'), 'spearman'].values[0]
-            df['spearman_from_mean'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'mean'), 'spearman'].values[0]
             dataframes.append(df)
 
         return pd.concat(dataframes, ignore_index=True)
 
     def get_pairwise_correlation(self, src, tgt, path):
         if src == tgt:
-            return src, tgt, 1.0, 1.0, 1.0, 1.0
+            return src, tgt, 1.0, 1.0
         else:
             src_nii = os.path.join(path, src, RESULT_NII) if src != 'mean' else os.path.join(path, MEAN_NII)
             tgt_nii = os.path.join(path, tgt, RESULT_NII) if tgt != 'mean' else os.path.join(path, MEAN_NII)
             spear = self.corr_srv.get_correlation_coefficient(src_nii, tgt_nii, 'spearman')
             pear = self.corr_srv.get_correlation_coefficient(src_nii, tgt_nii, 'pearson')
-            dice = self.corr_srv.get_correlation_coefficient(src_nii, tgt_nii, 'dice')
-            jacc = self.corr_srv.get_correlation_coefficient(src_nii, tgt_nii, 'jaccard')
-            return src, tgt, spear, pear, dice, jacc
+            return src, tgt, spear, pear
 
     def get_all_correlations(self, path, ids: List[str], nb_cores: int) -> pd.DataFrame:
-        ids.append('mean')
+        # ids.append('mean')
         n = len(ids)
 
         args = []
@@ -60,10 +56,10 @@ class PostprocessService:
         for result in results:
             data.append(result)
             if result[0] != result[1]:
-                data.append((result[1], result[0], result[2], result[3], result[4], result[5]))
+                data.append((result[1], result[0], result[2], result[3]))
 
-        dataframe = pd.DataFrame(data, columns=['source', 'target', 'spearman', 'pearson', 'dice', 'jaccard'])
-        return dataframe.sort_values(by='spearman', ascending=False)
+        dataframe = pd.DataFrame(data, columns=['source', 'target', 'spearman', 'pearson'])
+        return dataframe.sort_values(by='pearson', ascending=False)
 
     def get_mean_image(self, inputs: list, batch_size: int) -> nib.Nifti1Image:
         total_sum = None

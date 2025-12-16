@@ -14,6 +14,8 @@ def run():
 
     parser = ArgumentParser(description='Sample and run configuration')
     parser.add_argument('--configs', type=str, help='path to configurations CSV')
+    parser.add_argument('--index', type=int, help='configs starting index')
+    parser.add_argument('--step', type=int, help='number of configs to run')
     parser.add_argument('--ref', type=str,
                         help='path to reference configuration CSV')
     parser.add_argument('--data', type=str, required=True,
@@ -22,13 +24,15 @@ def run():
     args = parser.parse_args()
     if not (args.ref or args.configs):
         parser.error("At least one of --ref or --configs must be specified")
+    if (args.configs and not (args.index or args.step)):
+        parser.error("If --configs is specified, then --index and --step must be specified")
 
     configs = []
     if args.configs is not None:
-        configs = file_srv.read_config(args.configs)
+        configs = file_srv.read_config(args.configs, args.index, args.step)
     ref = None
     if args.ref is not None:
-        ref = file_srv.read_config(args.ref)[0]
+        ref = file_srv.read_config(args.ref, 0, 1)[0]
 
     data_desc = file_srv.read_data_descriptor(args.data)
     nb_procs = len(os.sched_getaffinity(0))

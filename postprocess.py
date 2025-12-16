@@ -34,10 +34,10 @@ def postproc():
     else:
         print(f'[{size}] results found in [{basedir}]')
 
-    print(f"Generating mean result image from [{size}] results...")
-    mean_nifti_image = postproc_srv.get_mean_image(results, 10)
-    nib.save(mean_nifti_image, mean_path)
-    print(f"Mean result image written to [{mean_path}]")
+    # print(f"Generating mean result image from [{size}] results...")
+    # mean_nifti_image = postproc_srv.get_mean_image(results, 10)
+    # nib.save(mean_nifti_image, mean_path)
+    # print(f"Mean result image written to [{mean_path}]")
 
     print(f"Computing all correlations between [{size}] results...")
     nb_cores = len(os.sched_getaffinity(0))

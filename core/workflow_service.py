@@ -37,27 +37,41 @@ class WorkflowService:
             if value:
                 features.append(key)
 
+        src_infos = self.get_infos(subjects)
+
         nodes = {}
-        nodes.update(self.preproc_srv.get_nodes(features, data_descriptor))
-        nodes.update(self.sub_analysis_srv.get_nodes(features, data_descriptor))
+        if 'preprocessing' in features:
+            src_infos.features.append('preprocessing')
+            nodes.update(self.preproc_srv.get_nodes(features, data_descriptor))
+        if 'first_level' in features:
+            src_infos.features.append('first_level')
+            nodes.update(self.sub_analysis_srv.get_nodes(features, data_descriptor))
+
         if is_group:
             nodes.update(self.group_analysis_srv.get_nodes(features, data_descriptor))
 
         workflow.base_dir = data_descriptor.work_path
 
-        src_infos = self.get_infos(subjects)
         inputs = self.get_subject_input(data_descriptor)
 
         print("Connecting subject-level preprocessing nodes...")
         workflow.connect(src_infos, 'subject_id', inputs, 'subject_id')
 
-        # inputs -> motion_correction_realignment
-
+        gunzip_func = None
         if data_descriptor.input['func'].endswith('.nii.gz'):
             gunzip_func = self.get_gunzip('func')
             # inputs -> gunzip_func
             workflow.connect(inputs, 'func',
                              gunzip_func, 'in_file')
+        gunzip_anat = None
+        if data_descriptor.input['anat'].endswith('.nii.gz'):
+            gunzip_anat = self.get_gunzip('anat')
+            # inputs -> gunzip_anat
+            workflow.connect(inputs, 'anat',
+                             gunzip_anat, 'in_file')
+
+        # inputs -> motion_correction_realignment
+        if gunzip_func:
             # gunzip_func -> motion_correction_realignment
             workflow.connect(gunzip_func, 'out_file',
                              nodes['motion_correction_realignment'], SPM.Realign.Input.in_files)
@@ -68,6 +82,7 @@ class WorkflowService:
 
         # distorsion_correction
         # Ignore for now
+        # TODO
 
         if 'slice_timing_correction' in nodes:
             # motion_correction_realignment -> slice_timing_correction
@@ -95,11 +110,7 @@ class WorkflowService:
         workflow.connect(nodes['motion_correction_realignment'], SPM.Realign.Output.mean_image,
                          nodes['coregistration'], func_input)
 
-        if data_descriptor.input['anat'].endswith('.nii.gz'):
-            gunzip_anat = self.get_gunzip('anat')
-            # inputs -> gunzip_anat
-            workflow.connect(inputs, 'anat',
-                             gunzip_anat, 'in_file')
+        if gunzip_anat:
             # gunzip_anat -> coregistration
             workflow.connect(gunzip_anat, 'out_file',
                              nodes['coregistration'], anat_input)
@@ -109,8 +120,24 @@ class WorkflowService:
                              nodes['coregistration'], anat_input)
 
         # coregister -> segmentation
-        workflow.connect(nodes['coregistration'], SPM.Coregister.Output.coregistered_source,
-                         nodes['segmentation'], SPM.NewSegment.Input.channel_files)
+        if SPM.Coregister.Input.source == anat_input:
+            # coregistered source is anat
+            nodes['coregistration'].features.append("coregistration/source_target/anat_on_func")
+            workflow.connect(nodes['coregistration'], SPM.Coregister.Output.coregistered_source,
+                            nodes['segmentation'], SPM.NewSegment.Input.channel_files)
+        # coregister -> segmentation
+        else:
+            # coregistered source is NOT anat
+            nodes['coregistration'].features.append("coregistration/source_target/func_on_anat")
+            if gunzip_anat:
+                # gunzip_anat -> segmentation
+                workflow.connect(gunzip_anat, 'out_file',
+                                 nodes['segmentation'], SPM.NewSegment.Input.channel_files)
+            else:
+                # inputs -> segmentation
+                workflow.connect(inputs, 'anat',
+                                 nodes['segmentation'], SPM.NewSegment.Input.channel_files)
+
 
         # segmentation -> spatial_normalization
         workflow.connect(nodes['segmentation'], SPM.NewSegment.Output.forward_deformation_field,
@@ -166,6 +193,8 @@ class WorkflowService:
                          output,
                          f'{output_path}.@con_images')
 
+        self.check_implemented_features(workflow, features)
+
         print("Subject-level workflow ready.")
         return workflow
 
@@ -212,11 +241,31 @@ class WorkflowService:
 
         return workflow
 
+    def check_implemented_features(self, workflow, features):
+        impl_features = []
+        for node in workflow._get_all_nodes():
+            if hasattr(node, 'features'):
+                impl_features.extend(node.features)
+
+        impl_features_set = set(impl_features)
+        features_set = set(features)
+        missing_in_features = impl_features_set - features_set
+        missing_in_impl_features = features_set - impl_features_set
+
+        # Print warnings
+        if missing_in_features:
+            print(
+                f"[Implementation error] [{len(missing_in_features)}] features implemented in workflow not present in configuration : [{missing_in_features}]")
+        if missing_in_impl_features:
+            print(
+                f"[Implementation error] [{len(missing_in_impl_features)}] features in configuration not implemented in workflow : [{missing_in_impl_features}]")
+
     def get_infos(self, subjects):
         name = "infos"
         print(f"Implementing [{name}]...")
         infos = Node(interface=IdentityInterface(fields=['subject_id']), name=name)
         infos.iterables = [('subject_id', subjects)]
+        infos.features = ['pipeline']
         print(f"[{name}] added to workflow")
         return infos
 

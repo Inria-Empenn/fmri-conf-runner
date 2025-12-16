@@ -19,6 +19,8 @@ class SubjectAnalysisService:
         'sub_level_spec_realignment_parameters'
     ]
 
+    tool = 'spm'
+
     def get_nodes(self, features: list, data_desc: DataDescriptor) -> Dict[str, Node]:
 
         print("Implementing subject level analysis nodes...")
@@ -62,25 +64,31 @@ class SubjectAnalysisService:
         design.inputs.interscan_interval = data_desc.tr
 
         name = "signal_modeling"
+        design.features = [name, f'{name}/tool', f'{name}/tool/{self.tool}']
 
         if f"{name}/hrf" in features:
+            design.features.append(f"{name}/hrf")
             time = 0
             dispersion = 0
-            if f"{name}/hrf/temporal_derivs" in features:
-                time = 0
-                dispersion = 0
+            if f"{name}/hrf/canonical" in features:
+                design.features.append(f"{name}/hrf/canonical")
             if f"{name}/hrf/temporal_derivs" in features:
                 time = 1
+                design.features.append(f"{name}/hrf/temporal_derivs")
             if f"{name}/hrf/temporal_dispersion_derivs" in features:
                 time = 1
                 dispersion = 1
+                design.features.append(f"{name}/hrf/temporal_dispersion_derivs")
             design.inputs.bases = {'hrf': {'derivs': [time, dispersion]}}
 
         if f"{name}/temporal_noise_autocorrelation" in features:
+            design.features.append(f"{name}/temporal_noise_autocorrelation")
             if f"{name}/temporal_noise_autocorrelation/AR1" in features:
                 design.inputs.model_serial_correlations = 'AR(1)'
+                design.features.append(f"{name}/temporal_noise_autocorrelation/AR1")
             if f"{name}/temporal_noise_autocorrelation/FAST" in features:
                 design.inputs.model_serial_correlations = 'FAST'
+                design.features.append(f"{name}/temporal_noise_autocorrelation/FAST")
 
         design.inputs.mask_threshold = 0.8
         design.inputs.volterra_expansion_order = 1
@@ -125,7 +133,12 @@ class SubjectAnalysisService:
         ),
             name='sub_level_spec_realignment_parameters'
         )
-        nuisance_regressors.inputs.nb_regressors = float(self.get_feature_end(f"{name}/motion", features))
+        nuisance_regressors.features = [name]
+        if f"{name}/motion" in features:
+            nuisance_regressors.features.append(f"{name}/motion")
+            regs = self.get_feature_end(f"{name}/motion", features)
+            nuisance_regressors.inputs.nb_regressors = float(regs)
+            nuisance_regressors.features.append(f"{name}/motion/{regs}")
         return nuisance_regressors
 
     def get_feature_end(self, prefix, features):

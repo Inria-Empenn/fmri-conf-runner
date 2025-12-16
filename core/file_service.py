@@ -71,14 +71,15 @@ class FileService:
         print(f"Configuration(s) saved to [{file}]")
         return file
 
-    def read_config(self, path: str) -> List[dict]:
+    def read_config(self, path: str, index: int, step: int) -> List[dict]:
         configs = []
         df = pd.read_csv(path, delimiter=';')
-        for index, row in df.iterrows():
+        for i, row in df.iloc[index:index+step].iterrows():
             elements = dict()
             for column, value in row.items():
                 elements[column] = value
             configs.append(elements)
+        print(f"Selecting [{len(configs)}/{len(df)}] configurations starting from [{index}]")
         return configs
 
     def write_dataframe2csv(self, df: pd.DataFrame, path):
