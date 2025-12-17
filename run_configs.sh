@@ -25,4 +25,5 @@ echo "Running configuration is [$CONF]"
 
 g5k-setup-docker -t
 docker run -u root -v "$DATA:/data" -v "$RESULTS:/results" -v "$WORK:/work" -v "$CONFIGS:/configs" $TAG python -u run.py --config "/configs/$CONF" --step "$STEP" --index $INDEX --data /configs/data_desc.json
+sudo-g5k chown -R ymerel:empenn "$RESULTS"
 
