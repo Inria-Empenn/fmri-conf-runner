@@ -70,9 +70,6 @@ class WorkflowService:
             workflow.connect(inputs, 'anat',
                              gunzip_anat, 'in_file')
 
-
-
-
         # inputs -> motion_correction_realignment
         if gunzip_func:
             # gunzip_func -> motion_correction_realignment
@@ -91,18 +88,14 @@ class WorkflowService:
             # motion_correction_realignment -> slice_timing_correction
             workflow.connect(nodes['motion_correction_realignment'], SPM.Realign.Output.realigned_files,
                              nodes['slice_timing_correction'], SPM.SliceTiming.Input.in_files)
+            workflow.connect(nodes['slice_timing_correction'], SPM.SliceTiming.Output.timecorrected_files,
+                             nodes['coregistration'], SPM.Coregister.Input.apply_to_files)
+        else:
+            workflow.connect(nodes['motion_correction_realignment'], SPM.Realign.Output.realigned_files,
+                             nodes['coregistration'], SPM.Coregister.Input.apply_to_files)
 
         if "coregistration/source_target/anat_on_func" in features:
             nodes['coregistration'].features.append("coregistration/source_target/anat_on_func")
-
-            if 'slice_timing_correction' in nodes:
-                # slice_timing_correction -> spatial_normalization
-                workflow.connect(nodes['slice_timing_correction'], SPM.SliceTiming.Output.timecorrected_files,
-                                 nodes['spatial_normalization'], SPM.Normalize.Input.apply_to_files)
-            else:
-                # motion_correction_realignment -> spatial_normalization
-                workflow.connect(nodes['motion_correction_realignment'], SPM.Realign.Output.realigned_files,
-                                 nodes['spatial_normalization'], SPM.Normalize.Input.apply_to_files)
 
             workflow.connect(nodes['motion_correction_realignment'], SPM.Realign.Output.mean_image,
                              nodes['coregistration'], SPM.Coregister.Input.target)
@@ -137,13 +130,6 @@ class WorkflowService:
             workflow.connect(nodes['motion_correction_realignment'], SPM.Realign.Output.mean_image,
                              nodes['coregistration'], SPM.Coregister.Input.source)
 
-            if 'slice_timing_correction' in nodes:
-                workflow.connect(nodes['slice_timing_correction'], SPM.SliceTiming.Output.timecorrected_files,
-                                 nodes['coregistration'], SPM.Coregister.Input.apply_to_files)
-            else:
-                workflow.connect(nodes['motion_correction_realignment'], SPM.Realign.Output.realigned_files,
-                                 nodes['coregistration'], SPM.Coregister.Input.apply_to_files)
-
             if gunzip_anat:
                 # gunzip_anat -> segmentation
                 workflow.connect(gunzip_anat, 'out_file',
@@ -153,9 +139,9 @@ class WorkflowService:
                 workflow.connect(inputs, 'anat',
                                  nodes['segmentation'], SPM.NewSegment.Input.channel_files)
 
-            # coregistration -> spatial_normalization
-            workflow.connect(nodes['coregistration'], SPM.Coregister.Output.coregistered_files,
-                             nodes['spatial_normalization'], SPM.Normalize.Input.apply_to_files)
+        # coregistration -> spatial_normalization
+        workflow.connect(nodes['coregistration'], SPM.Coregister.Output.coregistered_files,
+                         nodes['spatial_normalization'], SPM.Normalize.Input.apply_to_files)
 
 
         # segmentation -> spatial_normalization
