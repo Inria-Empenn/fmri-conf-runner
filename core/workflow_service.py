@@ -114,6 +114,13 @@ class WorkflowService:
             workflow.connect(nodes['coregistration'], SPM.Coregister.Output.coregistered_source,
                              nodes['segmentation'], SPM.NewSegment.Input.channel_files)
 
+            if 'slice_timing_correction' in nodes:
+                workflow.connect(nodes['slice_timing_correction'], SPM.SliceTiming.Output.timecorrected_files,
+                                 nodes['spatial_normalization'], SPM.Normalize.Input.apply_to_files)
+            else:
+                workflow.connect(nodes['motion_correction_realignment'], SPM.Realign.Output.realigned_files,
+                                 nodes['spatial_normalization'], SPM.Normalize.Input.apply_to_files)
+
         elif "coregistration/source_target/func_on_anat" in features:
             nodes['coregistration'].features.append("coregistration/source_target/func_on_anat")
             # motion_correction_realignment -> coregistration
@@ -139,9 +146,9 @@ class WorkflowService:
                 workflow.connect(inputs, 'anat',
                                  nodes['segmentation'], SPM.NewSegment.Input.channel_files)
 
-        # coregistration -> spatial_normalization
-        workflow.connect(nodes['coregistration'], SPM.Coregister.Output.coregistered_files,
-                         nodes['spatial_normalization'], SPM.Normalize.Input.apply_to_files)
+                # coregistration -> spatial_normalization
+                workflow.connect(nodes['coregistration'], SPM.Coregister.Output.coregistered_files,
+                                 nodes['spatial_normalization'], SPM.Normalize.Input.apply_to_files)
 
 
         # segmentation -> spatial_normalization
