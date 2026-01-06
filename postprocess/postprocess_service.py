@@ -26,6 +26,8 @@ class PostprocessService:
             df['id'] = conf_id
             df['pearson_from_ref'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'ref'), 'pearson'].values[0]
             df['spearman_from_ref'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'ref'), 'spearman'].values[0]
+            df['pearson_from_mean'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'mean'), 'pearson'].values[0]
+            df['spearman_from_mean'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'mean'), 'spearman'].values[0]
             dataframes.append(df)
 
         return pd.concat(dataframes, ignore_index=True)
@@ -41,7 +43,7 @@ class PostprocessService:
             return src, tgt, spear, pear
 
     def get_all_correlations(self, path, ids: List[str], nb_cores: int) -> pd.DataFrame:
-        # ids.append('mean')
+        ids.append('mean')
         n = len(ids)
 
         args = []
