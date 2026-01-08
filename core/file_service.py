@@ -123,13 +123,6 @@ class FileService:
         hashfunc.update(data)
         return hashfunc.hexdigest()
 
-    def already_executed(self, data_desc: DataDescriptor, hashconf) -> bool:
-        for sub in data_desc.subjects:
-            result = os.path.join(data_desc.result_path, hashconf, f"_subject_id_{sub}", "result.nii")
-            if not os.path.exists(result):
-                return False
-        return True
-
     def filter_processed_subjects(self, data_desc: DataDescriptor, hashconf) -> list:
         subjects = []
         for sub in data_desc.subjects:

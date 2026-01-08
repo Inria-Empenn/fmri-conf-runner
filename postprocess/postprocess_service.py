@@ -97,14 +97,27 @@ class PostprocessService:
         print("Mean image created.")
         return mean_nifti
 
-    def get_train_test(self, path: str, dataset: pd.DataFrame, train_size: float, iteration: int):
-        print(f"Iteration [{iteration}] - Training size [{train_size}]")
+    def get_train_test(self, path: str, dataset: pd.DataFrame, iteration: int):
+        proportions = np.linspace(0.1, 0.9, 9).tolist()
+
         X = dataset['id']
         y = dataset['id']
-        X_id_train, X_id_test, y_id_train, y_id_test = train_test_split(X, y, train_size=train_size)
-
-        self.write_subset(X_id_train, dataset, path, f'train_{iteration}')
+        X_id_train_pool, X_id_test, _, _ = train_test_split(X, y, test_size=0.2)
+        print(f"Iteration [{iteration}] - Testing size [{len(X_id_test)}]")
         self.write_subset(X_id_test, dataset, path, f'test_{iteration}')
+
+        for prop in proportions:
+
+            train_size = int(prop * len(X_id_train_pool))
+
+            print(f"Iteration [{iteration}] - Training size [{train_size}/{len(X_id_train_pool)}]")
+
+            indices = np.random.choice(
+                X_id_train_pool.index, size=train_size, replace=False
+            )
+
+            X_id_train = X_id_train_pool.loc[indices]
+            self.write_subset(X_id_train, dataset, path, f'train_{iteration}')
 
     def write_subset(self, ids: [], dataset: DataFrame, path: str, name: str):
         size = len(ids)
@@ -113,13 +126,14 @@ class PostprocessService:
         mean_path = os.path.join(path, f'tmp_mean_result_{name}.nii')
         files = []
         for conf_id in ids:
-            files.append(os.path.join(path, conf_id, '_subject_id_01', 'result.nii'))
-        mean_img = self.get_mean_image(files, 10)
+            files.append(os.path.join(path, conf_id, RESULT_NII))
+        mean_img = self.get_mean_image(files, 20)
         nib.save(mean_img, mean_path)
         print(f"Computing correlations to mean image for [{size}] results...")
         for index, row in filtered_ds.iterrows():
-            img = os.path.join(path, row['id'], '_subject_id_01', 'result.nii')
-            filtered_ds.at[index, 'from_mean'] = self.corr_srv.get_correlation_coefficient(mean_path, img, 'spearman')
+            img = os.path.join(path, row['id'], RESULT_NII)
+            filtered_ds.at[index, 'pearson_from_mean'] = self.corr_srv.get_correlation_coefficient(mean_path, img, 'pearson')
+            filtered_ds.at[index, 'spearman_from_mean'] = self.corr_srv.get_correlation_coefficient(mean_path, img, 'spearman')
         filtered_ds.to_csv(os.path.join(path, ds_name),
                        index=False, sep=';')
         print(f"Written to [{ds_name}].")
