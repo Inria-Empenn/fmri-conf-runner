@@ -9,8 +9,8 @@
 TAG="fmri-confs-runner"
 
 BASE="/home/ymerel/empenn_group_storage/private/ymerel"
-RESULTS="$BASE/results/auditory"
-
+SUBDIR="$OAR_JOB_NAME"
+RESULTS="$BASE/results/$SUBDIR"
 g5k-setup-docker -t
 docker build . -t $TAG
 docker run -u root -v "$RESULTS:/results" $TAG python -u train_test.py --results "/results" --dataset "dataset.csv" --iter "$OAR_ARRAY_INDEX"
