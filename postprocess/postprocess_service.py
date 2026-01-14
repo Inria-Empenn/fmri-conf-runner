@@ -130,10 +130,16 @@ class PostprocessService:
         mean_img = self.get_mean_image(files, 20)
         nib.save(mean_img, mean_path)
         print(f"Computing correlations to mean image for [{size}] results...")
+        if 'pearson_from_mean' not in filtered_ds.columns:
+            print(f"No [pearson_from_mean] column found in found in dataset")
+        if 'spearman_from_mean' not in filtered_ds.columns:
+            print(f"No [spearman_from_mean] column found in found in dataset")
         for index, row in filtered_ds.iterrows():
             img = os.path.join(path, row['id'], RESULT_NII)
-            filtered_ds.at[index, 'pearson_from_mean'] = self.corr_srv.get_correlation_coefficient(mean_path, img, 'pearson')
-            filtered_ds.at[index, 'spearman_from_mean'] = self.corr_srv.get_correlation_coefficient(mean_path, img, 'spearman')
+            if 'pearson_from_mean' in filtered_ds.columns:
+                filtered_ds.at[index, 'pearson_from_mean'] = self.corr_srv.get_correlation_coefficient(mean_path, img, 'pearson')
+            if 'spearman_from_mean' in filtered_ds.columns:
+                filtered_ds.at[index, 'spearman_from_mean'] = self.corr_srv.get_correlation_coefficient(mean_path, img, 'spearman')
         filtered_ds.to_csv(os.path.join(path, ds_name),
                        index=False, sep=';')
         print(f"Written to [{ds_name}].")
