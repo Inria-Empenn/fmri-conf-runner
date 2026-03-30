@@ -197,6 +197,10 @@ class WorkflowService:
                          nodes['sub_level_contrasts'], SPM.EstimateContrast.Input.residual_image)
 
         output = self.get_subject_output(output_path)
+        # sub_level_model -> output
+        workflow.connect(nodes['sub_level_model'], SPM.EstimateModel.Output.mask_image,
+                         output,
+                         f'{output_path}.@mask_image')
         # sub_level_contrasts -> output
         workflow.connect(nodes['sub_level_contrasts'], SPM.EstimateContrast.Output.spmT_images,
                          output,

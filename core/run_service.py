@@ -58,6 +58,7 @@ class RunService:
                 # subject-level
                 sub_workflow = self.workflow_srv.build_subject_workflow(config, subjects, data_desc, hashconf)
                 self.workflow_srv.run(sub_workflow, conf_dir, nb_procs)
+                self.file_srv.check_mask(subjects, data_desc, hashconf)
 
             if total_subs > 1:
                 # group-level
@@ -83,6 +84,7 @@ class RunService:
             # subject-level
             workflow = self.workflow_srv.build_subject_workflow(ref, subjects, data_desc, name)
             self.workflow_srv.run(workflow, conf_dir, nb_procs)
+            self.file_srv.check_mask(subjects, data_desc, name)
 
         if total_subs > 1:
             # group-level
