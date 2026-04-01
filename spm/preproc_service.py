@@ -145,7 +145,7 @@ class PreprocService:
         node.features.append(f'{name}/template')
         node.features.append(f'{name}/template/Ixi549Space')
 
-        # uniaue algo for SPM
+        # unique algo for SPM
         node.features.append(f'{name}/algorithm')
         node.features.append(f'{name}/algorithm/nonlinear')
 

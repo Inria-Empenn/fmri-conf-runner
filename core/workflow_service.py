@@ -146,9 +146,9 @@ class WorkflowService:
                 workflow.connect(inputs, 'anat',
                                  nodes['segmentation'], SPM.NewSegment.Input.channel_files)
 
-                # coregistration -> spatial_normalization
-                workflow.connect(nodes['coregistration'], SPM.Coregister.Output.coregistered_files,
-                                 nodes['spatial_normalization'], SPM.Normalize.Input.apply_to_files)
+            # coregistration -> spatial_normalization
+            workflow.connect(nodes['coregistration'], SPM.Coregister.Output.coregistered_files,
+                             nodes['spatial_normalization'], SPM.Normalize.Input.apply_to_files)
 
 
         # segmentation -> spatial_normalization

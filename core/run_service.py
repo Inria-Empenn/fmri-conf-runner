@@ -32,10 +32,17 @@ class RunService:
 
         self.file_srv.write_data_descriptor(data_desc)
 
-        if ref is not None:
-            self.run_ref(data_desc, ref, nb_procs)
+        hash_configs = {}
 
-        total_configs = len(configs)
+        if ref is not None:
+            hash_configs['ref'] = ref
+            # self.run_ref(data_desc, ref, nb_procs)
+
+        for config in configs:
+            hashconf = self.file_srv.hash_config(config)
+            hash_configs[hashconf] = config
+
+        total_configs = len(hash_configs)
         total_subs = len(data_desc.subjects)
 
         if total_configs == 0:
@@ -43,8 +50,7 @@ class RunService:
 
         cpt = 1
         print(f"Running [{total_configs}] configurations for [{total_subs}] subjects to [{data_desc.result_path}]...")
-        for config in configs:
-            hashconf = self.file_srv.hash_config(config)
+        for hashconf, config in hash_configs.items():
             conf_dir = os.path.join(data_desc.result_path, hashconf)
 
             print(f"Running config [{hashconf}][{cpt}/{total_configs}]...")

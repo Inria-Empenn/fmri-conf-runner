@@ -1,3 +1,5 @@
+import os
+
 import nipype.pipeline.engine as pe  # pypeline engine
 from nipype import Node, Function
 from nipype.algorithms.modelgen import SpecifySPMModel
@@ -20,7 +22,6 @@ class SubjectAnalysisService:
     ]
 
     tool = 'spm'
-
     def get_nodes(self, features: list, data_desc: DataDescriptor) -> Dict[str, Node]:
 
         print("Implementing subject level analysis nodes...")
