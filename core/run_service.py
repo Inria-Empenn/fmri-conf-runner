@@ -64,7 +64,14 @@ class RunService:
                 # subject-level
                 sub_workflow = self.workflow_srv.build_subject_workflow(config, subjects, data_desc, hashconf)
                 self.workflow_srv.run(sub_workflow, conf_dir, nb_procs)
-                self.file_srv.check_mask(subjects, data_desc, hashconf)
+
+                ko_subjects = self.file_srv.check_mask(subjects, data_desc, hashconf)
+                print(f"[{len(ko_subjects)}] subjects will be prealigned")
+                if len(ko_subjects) > 0:
+                    sub_workflow = self.workflow_srv.build_subject_workflow(config, ko_subjects, data_desc, hashconf, True)
+                    self.workflow_srv.run(sub_workflow, conf_dir, nb_procs)
+                    ko_subjects = self.file_srv.check_mask(ko_subjects, data_desc, hashconf)
+                    print(f"[{len(ko_subjects)}] subjects are still under mask coverage target.")
 
             if total_subs > 1:
                 # group-level
@@ -73,32 +80,6 @@ class RunService:
 
             cpt += 1
             self.print_elapsed(start, nb_procs, hashconf)
-
-    def run_ref(self, data_desc: DataDescriptor, ref: dict, nb_procs):
-        name = 'ref'
-        conf_dir = os.path.join(data_desc.result_path, name)
-        total_subs = len(data_desc.subjects)
-
-        print(f"Running reference configuration for [{total_subs}] subjects to [{conf_dir}]...")
-        start = time.perf_counter()
-
-        subjects = self.file_srv.filter_processed_subjects(data_desc, name)
-        if len(subjects) > 0:
-            os.makedirs(conf_dir, exist_ok=True)
-            self.file_srv.write_config2csv(ref, os.path.join(conf_dir, CONFIG_CSV))
-
-            # subject-level
-            workflow = self.workflow_srv.build_subject_workflow(ref, subjects, data_desc, name)
-            self.workflow_srv.run(workflow, conf_dir, nb_procs)
-            self.file_srv.check_mask(subjects, data_desc, name)
-
-        if total_subs > 1:
-            # group-level
-            group_workflow = self.workflow_srv.build_group_workflow(ref, data_desc, name)
-            self.workflow_srv.run(group_workflow, conf_dir, nb_procs)
-
-        self.print_elapsed(start, nb_procs, name)
-        return conf_dir
 
     def print_elapsed(self, start, nb_procs, conf):
         elapsed = time.perf_counter() - start

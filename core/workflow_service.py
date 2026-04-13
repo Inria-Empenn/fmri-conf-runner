@@ -1,12 +1,20 @@
+import gzip
 import os
+import shutil
 
-from nipype import Node, IdentityInterface, SelectFiles, DataSink, Merge
+import nibabel as nib
+from nipype import Node, IdentityInterface, SelectFiles, DataSink, Merge, Function
 from nipype import Workflow
 from nipype.algorithms.misc import Gunzip
+from nipype.interfaces.minc import Calc
+from nipype.interfaces.spm import Coregister
+from nipype.interfaces.spm.base import Info as SPMInfo
+from traits.trait_base import Undefined, _Undefined
 
+import spm
 from core.constants import SPM
 from core.data_descriptor import DataDescriptor
-from core.file_service import RESULT_NII, CONTRAST_NII
+from core.file_service import RESULT_NII, CONTRAST_NII, FileService
 from spm.group_analysis_service import GroupAnalysisService
 from spm.preproc_service import PreprocService
 from spm.subject_analysis_service import SubjectAnalysisService
@@ -19,12 +27,15 @@ class WorkflowService:
 
     PLUGIN = 'MultiProc'
 
+    MNI_file = os.path.join(SPMInfo.getinfo()['path'], 'canonical', 'avg305T1.nii')
+
     def run(self, workflow: Workflow, path: str, nb_procs):
         print(f"Workflow [{workflow.name}] running...")
-        workflow.run('MultiProc', plugin_args = {'n_procs': nb_procs})
+        workflow.run(self.PLUGIN, plugin_args={'n_procs': nb_procs})
         print(f"Workflow results written to [{path}].")
 
-    def build_subject_workflow(self, config: dict, subjects: list, data_descriptor: DataDescriptor, name: str) -> Workflow:
+    def build_subject_workflow(self, config: dict, subjects: list, data_descriptor: DataDescriptor, name: str,
+                               prealign=False) -> Workflow:
 
         is_group = len(subjects) > 1
 
@@ -40,6 +51,8 @@ class WorkflowService:
         src_infos = self.get_infos(subjects)
 
         nodes = {}
+        if prealign:
+            nodes['prealign'] = self.get_prealign_node()
         if 'preprocessing' in features:
             src_infos.features.append('preprocessing')
             nodes.update(self.preproc_srv.get_nodes(features, data_descriptor))
@@ -57,27 +70,27 @@ class WorkflowService:
         print("Connecting subject-level preprocessing nodes...")
         workflow.connect(src_infos, 'subject_id', inputs, 'subject_id')
 
-        gunzip_func = None
-        if data_descriptor.input['func'].endswith('.nii.gz'):
-            gunzip_func = self.get_gunzip('func')
-            # inputs -> gunzip_func
-            workflow.connect(inputs, 'func',
-                             gunzip_func, 'in_file')
-        gunzip_anat = None
-        if data_descriptor.input['anat'].endswith('.nii.gz'):
-            gunzip_anat = self.get_gunzip('anat')
-            # inputs -> gunzip_anat
-            workflow.connect(inputs, 'anat',
-                             gunzip_anat, 'in_file')
+        gunzip_func = self.get_gunzip('func')
+        # inputs -> gunzip_func
+        workflow.connect(inputs, 'func',
+                         gunzip_func, 'in_file')
 
-        # inputs -> motion_correction_realignment
-        if gunzip_func:
-            # gunzip_func -> motion_correction_realignment
+        gunzip_anat = self.get_gunzip('anat')
+        # inputs -> gunzip_anat
+        workflow.connect(inputs, 'anat',
+                         gunzip_anat, 'in_file')
+
+        if 'prealign' in nodes:
+            workflow.connect(gunzip_anat, 'out_file',
+                             nodes['prealign'], SPM.Coregister.Input.source)
             workflow.connect(gunzip_func, 'out_file',
+                             nodes['prealign'], SPM.Coregister.Input.apply_to_files)
+            # prealign -> motion_correction_realignment
+            workflow.connect(nodes['prealign'], SPM.Coregister.Output.coregistered_files,
                              nodes['motion_correction_realignment'], SPM.Realign.Input.in_files)
         else:
-            # inputs -> motion_correction_realignment
-            workflow.connect(inputs, 'func',
+            # gunzip_func -> motion_correction_realignment
+            workflow.connect(gunzip_func, 'out_file',
                              nodes['motion_correction_realignment'], SPM.Realign.Input.in_files)
 
         # distorsion_correction
@@ -100,13 +113,11 @@ class WorkflowService:
             workflow.connect(nodes['motion_correction_realignment'], SPM.Realign.Output.mean_image,
                              nodes['coregistration'], SPM.Coregister.Input.target)
 
-            if gunzip_anat:
-                # gunzip_anat -> coregistration
-                workflow.connect(gunzip_anat, 'out_file',
+            if prealign:
+                workflow.connect(nodes['prealign'], SPM.Coregister.Output.coregistered_source,
                                  nodes['coregistration'], SPM.Coregister.Input.source)
             else:
-                # inputs -> coregistration
-                workflow.connect(inputs, 'anat',
+                workflow.connect(gunzip_anat, 'out_file',
                                  nodes['coregistration'], SPM.Coregister.Input.source)
 
             # coregistered source is anat
@@ -125,31 +136,27 @@ class WorkflowService:
             nodes['coregistration'].features.append("coregistration/source_target/func_on_anat")
             # motion_correction_realignment -> coregistration
 
-            if gunzip_anat:
-                # gunzip_anat -> coregistration
-                workflow.connect(gunzip_anat, 'out_file',
+            if prealign:
+                workflow.connect(nodes['prealign'], SPM.Coregister.Output.coregistered_source,
                                  nodes['coregistration'], SPM.Coregister.Input.target)
             else:
-                # inputs -> coregistration
-                workflow.connect(inputs, 'anat',
+                # gunzip_anat -> coregistration
+                workflow.connect(gunzip_anat, 'out_file',
                                  nodes['coregistration'], SPM.Coregister.Input.target)
 
             workflow.connect(nodes['motion_correction_realignment'], SPM.Realign.Output.mean_image,
                              nodes['coregistration'], SPM.Coregister.Input.source)
 
-            if gunzip_anat:
-                # gunzip_anat -> segmentation
-                workflow.connect(gunzip_anat, 'out_file',
+            if prealign:
+                workflow.connect(nodes['prealign'], SPM.Coregister.Output.coregistered_source,
                                  nodes['segmentation'], SPM.NewSegment.Input.channel_files)
             else:
-                # inputs -> segmentation
-                workflow.connect(inputs, 'anat',
+                workflow.connect(gunzip_anat, 'out_file',
                                  nodes['segmentation'], SPM.NewSegment.Input.channel_files)
 
             # coregistration -> spatial_normalization
             workflow.connect(nodes['coregistration'], SPM.Coregister.Output.coregistered_files,
                              nodes['spatial_normalization'], SPM.Normalize.Input.apply_to_files)
-
 
         # segmentation -> spatial_normalization
         workflow.connect(nodes['segmentation'], SPM.NewSegment.Output.forward_deformation_field,
@@ -295,7 +302,6 @@ class WorkflowService:
         print(f"[{name}] added to workflow")
         return sub_input
 
-
     def get_group_input(self, config: str, data_desc: DataDescriptor):
         name = "group_input"
         print(f"Implementing [{name}]...")
@@ -331,6 +337,32 @@ class WorkflowService:
     def get_gunzip(self, type: str):
         name = f'gunzip_{type}'
         print(f"Implementing [{name}]...")
-        gz = Node(interface=Gunzip(), name=name)
+
+        def gunzip(in_file):
+            import os
+            import gzip
+            import shutil
+            if in_file.endswith('.gz'):
+                filename = os.path.basename(in_file[:-3])
+                out_file = os.path.abspath(filename)
+                if not os.path.exists(out_file):
+                    with gzip.open(in_file, 'rb') as f_in:
+                        with open(out_file, 'wb') as f_out:
+                            shutil.copyfileobj(f_in, f_out)
+                return out_file
+            return os.path.abspath(in_file)
+
+        gz = Node(Function(input_names=['in_file'],
+                           output_names=['out_file'],
+                           function=gunzip),
+                  name=name)
         print(f"[{name}] added to workflow")
         return gz
+
+    def get_prealign_node(self):
+        name = "prealign"
+        node = Node(interface=Coregister(), name=name)
+        node.inputs.target = self.MNI_file
+        node.inputs.cost_function = PreprocService.cost_funcs['normalised_mutual_information']
+        node.inputs.jobtype = 'estimate'
+        return node
