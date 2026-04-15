@@ -145,16 +145,16 @@ class FileService:
             result = os.path.join(data_desc.result_path, hashconf, f"_subject_id_{sub}", RESULT_NII)
             mask = os.path.join(data_desc.result_path, hashconf, f"_subject_id_{sub}", MASK_NII)
             if not os.path.exists(result) or not os.path.exists(mask):
-                print(f"[LOG][FILE][{hashconf}][MASK] No [mask.nii] found for subject [{sub}].")
+                print(f"[LOG][FILE][MASK][{hashconf}] No [mask.nii] found for subject [{sub}].")
             else:
                 sub_mask_sum = np.sum(image.load_img(mask).get_fdata())
                 mni_mask_sum = np.sum(image.load_img(self.mni_mask).get_fdata())
                 coverage = sub_mask_sum / mni_mask_sum
 
-                print(f"[LOG][FILE][{hashconf}][MASK] Subject [{sub}] mask coverage is [{(coverage * 100)}%]")
+                print(f"[LOG][FILE][MASK][{hashconf}] Subject [{sub}] mask coverage is [{(coverage * 100)}%]")
 
                 if coverage < 0.8:
-                    print(f"[LOG][FILE][{hashconf}][MASK] Subject [{sub}] is tagged as misaligned.")
+                    print(f"[LOG][FILE][MASK][{hashconf}] Subject [{sub}] is tagged as misaligned.")
                     ko_subjects.append(sub)
         return ko_subjects
 
