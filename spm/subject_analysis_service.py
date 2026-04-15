@@ -24,17 +24,17 @@ class SubjectAnalysisService:
     tool = 'spm'
     def get_nodes(self, features: list, data_desc: DataDescriptor) -> Dict[str, Node]:
 
-        print(f"[LOG] Implementing subject level analysis nodes...")
+        print(f"[LOG][SPM][SUBJECT] Implementing subject level analysis nodes...")
         nodes = {}
         for step in self.steps:
             if step == 'sub_level_spec_realignment_parameters':
                 if f"signal_modeling/nuisance_regressors" not in features:
                     continue
-            print(f"[LOG] Implementing [{step}]...")
+            print(f"[LOG][SPM][SUBJECT] Implementing [{step}]...")
             node = self.get_node(step, features, data_desc)
             if node:
                 nodes[step] = node
-            print(f"[LOG] [{step}] added to workflow")
+            print(f"[LOG][SPM][SUBJECT] [{step}] added to workflow")
 
         return nodes
 

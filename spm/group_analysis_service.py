@@ -19,14 +19,14 @@ class GroupAnalysisService:
     ]
 
     def get_nodes(self, features: list, data_desc: DataDescriptor) -> Dict[str, Node]:
-        print(f"[LOG] Implementing group level analysis nodes...")
+        print(f"[LOG][SPM][GROUP] Implementing group level analysis nodes...")
         nodes = {}
         for step in self.steps:
-            print(f"[LOG] Implementing [{step}]...")
+            print(f"[LOG][SPM][GROUP] Implementing [{step}]...")
             node = self.get_node(step, features, data_desc)
             if node:
                 nodes[step] = node
-            print(f"[LOG] [{step}] added to workflow")
+            print(f"[LOG][SPM][GROUP] [{step}] added to workflow")
 
         return nodes
 

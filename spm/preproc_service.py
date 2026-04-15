@@ -45,15 +45,15 @@ class PreprocService:
     tpm_file = os.path.join(SPMInfo.getinfo()['path'], 'tpm', 'TPM.nii')
 
     def get_nodes(self, features: list, data_desc: DataDescriptor) -> Dict[str, Node]:
-        print(f"[LOG] Implementing preprocessing nodes...")
+        print(f"[LOG][SPM][PREPROC] Implementing preprocessing nodes...")
         nodes = {}
         for step in self.steps:
             if step in features:
-                print(f"[LOG] Implementing [{step}]...")
+                print(f"[LOG][SPM][PREPROC] Implementing [{step}]...")
                 node = self.get_node(step, features, data_desc)
                 if node:
                     nodes[step] = node
-                print(f"[LOG] [{step}] added to workflow")
+                print(f"[LOG][SPM][PREPROC] [{step}] added to workflow")
 
         return nodes
 
