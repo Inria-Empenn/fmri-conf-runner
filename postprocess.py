@@ -34,22 +34,22 @@ def postproc():
     else:
         print(f'[{size}] results found in [{basedir}]')
 
-    print(f"Generating mean result image from [{size}] results...")
+    print(f"[LOG] Generating mean result image from [{size}] results...")
     mean_nifti_image = postproc_srv.get_mean_image(results, 10)
     nib.save(mean_nifti_image, mean_path)
-    print(f"Mean result image written to [{mean_path}]")
+    print(f"[LOG] Mean result image written to [{mean_path}]")
 
-    print(f"Computing all correlations between [{size}] results...")
+    print(f"[LOG] Computing all correlations between [{size}] results...")
     nb_cores = len(os.sched_getaffinity(0))
-    print(f"[{nb_cores}] cores available")
+    print(f"[LOG] [{nb_cores}] cores available")
     correlations = postproc_srv.get_all_correlations(basedir, ids, nb_cores)
     correlations.to_csv(corr_path, index=False, sep=';')
-    print(f"Correlations written to [{corr_path}]")
+    print(f"[LOG] Correlations written to [{corr_path}]")
 
-    print(f"Building dataset from [{size}] results...")
+    print(f"[LOG] Building dataset from [{size}] results...")
     dataset = postproc_srv.get_dataset(basedir, correlations)
     dataset.to_csv(ds_path, index=False, sep=';')
-    print(f"Dataset CSV written to [{ds_path}]")
+    print(f"[LOG] Dataset CSV written to [{ds_path}]")
 
 
 if __name__ == '__main__':

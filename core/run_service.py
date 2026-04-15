@@ -2,14 +2,17 @@ import os
 import time
 from typing import Optional, List
 
+import nipype
 from core.data_descriptor import DataDescriptor
 from core.file_service import FileService, CONFIG_CSV
 from core.workflow_service import WorkflowService
 
-
 class RunService:
     file_srv = FileService()
     workflow_srv = WorkflowService()
+
+    # set to 'false' for debugging, 'true' for prod
+    CLEAN_OUTPUTS = 'true'
 
     def check_inputs(self, data_desc: DataDescriptor):
         ok = True
@@ -17,17 +20,20 @@ class RunService:
             for key, value in data_desc.input.items():
                 path = os.path.join(data_desc.data_path, value.replace('{subject_id}', sub))
                 if not os.path.isfile(path):
-                    print(f"Input [{path}] does not exists")
+                    print(f"[LOG] Input [{path}] does not exists")
                     ok = False
                 elif os.path.getsize(path) == 0:
-                    print(f"Input [{path}] is empty")
+                    print(f"[LOG] Input [{path}] is empty")
                     ok = False
         return ok
 
     def run(self, data_desc: DataDescriptor, configs: List[dict], ref: Optional[dict], nb_procs: int):
 
+        nipype.config.set('execution', 'remove_unnecessary_outputs', self.CLEAN_OUTPUTS)
+        print(f"[LOG] NyPype ['remove_unnecessary_outputs'] is set to [{self.CLEAN_OUTPUTS}]")
+
         if not self.check_inputs(data_desc):
-            print(f"Running interrupted.")
+            print(f"[LOG] Running interrupted.")
             return
 
         self.file_srv.write_data_descriptor(data_desc)
@@ -49,11 +55,11 @@ class RunService:
             return
 
         cpt = 1
-        print(f"Running [{total_configs}] configurations for [{total_subs}] subjects to [{data_desc.result_path}]...")
+        print(f"[LOG] Running [{total_configs}] configurations for [{total_subs}] subjects to [{data_desc.result_path}]...")
         for hashconf, config in hash_configs.items():
             conf_dir = os.path.join(data_desc.result_path, hashconf)
 
-            print(f"Running config [{hashconf}][{cpt}/{total_configs}]...")
+            print(f"[LOG] Running config [{hashconf}][{cpt}/{total_configs}]...")
             start = time.perf_counter()
 
             subjects = self.file_srv.filter_processed_subjects(data_desc, hashconf)
@@ -66,12 +72,13 @@ class RunService:
                 self.workflow_srv.run(sub_workflow, conf_dir, nb_procs)
 
                 ko_subjects = self.file_srv.check_mask(subjects, data_desc, hashconf)
-                print(f"[{len(ko_subjects)}] subjects will be prealigned")
+
+                print(f"[LOG][{hashconf}] [{len(ko_subjects)}] subjects will be prealigned")
                 if len(ko_subjects) > 0:
                     sub_workflow = self.workflow_srv.build_subject_workflow(config, ko_subjects, data_desc, hashconf, True)
                     self.workflow_srv.run(sub_workflow, conf_dir, nb_procs)
                     ko_subjects = self.file_srv.check_mask(ko_subjects, data_desc, hashconf)
-                    print(f"[{len(ko_subjects)}] subjects are still under mask coverage target.")
+                    print(f"[LOG][{hashconf}] [{len(ko_subjects)}] subjects are still under mask coverage target.")
 
             if total_subs > 1:
                 # group-level
@@ -87,4 +94,4 @@ class RunService:
         MM = int((elapsed % 3600) // 60)
         SS = int(elapsed % 60)
         sss = int((elapsed * 1000) % 1000)
-        print(f"[{conf}] finished - Elapsed time [{HH:02d}:{MM:02d}:{SS:02d}.{sss:03d}] - [{nb_procs}] cores")
+        print(f"[LOG] Config [{conf}] finished - Elapsed time [{HH:02d}:{MM:02d}:{SS:02d}.{sss:03d}] - [{nb_procs}] cores")

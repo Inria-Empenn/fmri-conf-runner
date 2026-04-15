@@ -1,4 +1,6 @@
 import os
+import signal
+import sys
 from argparse import ArgumentParser
 from datetime import datetime
 
@@ -7,6 +9,9 @@ from core.file_service import FileService
 
 
 def run():
+
+    signal.signal(signal.SIGTERM, handle_kill)
+    signal.signal(signal.SIGINT, handle_kill)
 
     file_srv = FileService()
     run_srv = RunService()
@@ -36,8 +41,12 @@ def run():
 
     data_desc = file_srv.read_data_descriptor(args.data)
     nb_procs = len(os.sched_getaffinity(0))
-    print(f"[{nb_procs}] cores available")
+    print(f"[LOG] [{nb_procs}] cores available")
     run_srv.run(data_desc, configs, ref, nb_procs)
+
+def handle_kill(sig, frame):
+    print(f"[LOG] Process has been killed with [{sig}]")
+    sys.exit(0)
 
 
 if __name__ == '__main__':

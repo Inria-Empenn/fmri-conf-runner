@@ -7,7 +7,7 @@ class TaskService:
             return self.get_motor_contrasts()
         if name.lower() == "emotion":
             return self.get_emotion_contrasts()
-        print(f"Task [{name.lower()}] contrasts are not implemented.")
+        print(f"[LOG] Task [{name.lower()}] contrasts are not implemented.")
 
     def get_auditory_contrasts(self):
         return [

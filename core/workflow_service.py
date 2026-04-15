@@ -30,9 +30,10 @@ class WorkflowService:
     MNI_file = os.path.join(SPMInfo.getinfo()['path'], 'canonical', 'avg305T1.nii')
 
     def run(self, workflow: Workflow, path: str, nb_procs):
-        print(f"Workflow [{workflow.name}] running...")
+
+        print(f"[LOG] Workflow [{workflow.name}] running...")
         workflow.run(self.PLUGIN, plugin_args={'n_procs': nb_procs})
-        print(f"Workflow results written to [{path}].")
+        print(f"[LOG] Workflow [{workflow.name}] results written to [{path}].")
 
     def build_subject_workflow(self, config: dict, subjects: list, data_descriptor: DataDescriptor, name: str,
                                prealign=False) -> Workflow:
@@ -67,7 +68,7 @@ class WorkflowService:
 
         inputs = self.get_subject_input(data_descriptor)
 
-        print("Connecting subject-level preprocessing nodes...")
+        print(f"[LOG][{name}] Connecting subject-level preprocessing nodes...")
         workflow.connect(src_infos, 'subject_id', inputs, 'subject_id')
 
         gunzip_func = self.get_gunzip('func')
@@ -168,7 +169,7 @@ class WorkflowService:
 
         ### SUBJECT LEVEL ANALYSIS ###
 
-        print("Connecting subject-level analysis nodes...")
+        print(f"[LOG] [{name}] Connecting subject-level analysis nodes...")
 
         # input -> sub_level_spec
         if "events" in data_descriptor.input:
@@ -216,9 +217,9 @@ class WorkflowService:
                          output,
                          f'{output_path}.@con_images')
 
-        self.check_implemented_features(workflow, features)
+        self.check_implemented_features(workflow, features, name)
 
-        print("Subject-level workflow ready.")
+        print(f"[LOG] [{name}] Subject-level workflow ready.")
         return workflow
 
     def build_group_workflow(self, config: dict, data_descriptor: DataDescriptor, name: str) -> Workflow:
@@ -238,7 +239,7 @@ class WorkflowService:
 
         inputs = self.get_group_input(name, data_descriptor)
 
-        print("Connecting group-level analysis nodes...")
+        print(f"[LOG] [{name}] Connecting group-level analysis nodes...")
 
         # group_input -> group_level_design
         workflow.connect(inputs, 'contrasts',
@@ -260,11 +261,11 @@ class WorkflowService:
         workflow.connect(nodes['group_level_contrasts'], SPM.EstimateContrast.Output.spmT_images,
                          self.get_group_output(output_path), f'{output_path}.@spmT_images')
 
-        print("Group-level workflow ready.")
+        print(f"[LOG] [{name}] Group-level workflow ready.")
 
         return workflow
 
-    def check_implemented_features(self, workflow, features):
+    def check_implemented_features(self, workflow, features, name):
         impl_features = []
         for node in workflow._get_all_nodes():
             if hasattr(node, 'features'):
@@ -278,33 +279,33 @@ class WorkflowService:
         # Print warnings
         if missing_in_features:
             print(
-                f"[Implementation error] [{len(missing_in_features)}] features implemented in workflow not present in configuration : [{missing_in_features}]")
+                f"[LOG][Implementation error] [{len(missing_in_features)}] features implemented in workflow [{name}] not present in configuration : [{missing_in_features}]")
         if missing_in_impl_features:
             print(
-                f"[Implementation error] [{len(missing_in_impl_features)}] features in configuration not implemented in workflow : [{missing_in_impl_features}]")
+                f"[LOG][Implementation error] [{len(missing_in_impl_features)}] features in configuration not implemented in workflow [{name}] : [{missing_in_impl_features}]")
 
     def get_infos(self, subjects):
         name = "infos"
-        print(f"Implementing [{name}]...")
+        print(f"[LOG] Implementing [{name}]...")
         infos = Node(interface=IdentityInterface(fields=['subject_id']), name=name)
         infos.iterables = [('subject_id', subjects)]
         infos.features = ['pipeline']
-        print(f"[{name}] added to workflow")
+        print(f"[LOG] [{name}] added to workflow")
         return infos
 
     def get_subject_input(self, data_desc: DataDescriptor):
         name = "subject_input"
-        print(f"Implementing [{name}]...")
+        print(f"[LOG] Implementing [{name}]...")
         templates = {}
         for key, value in data_desc.input.items():
             templates[key] = os.path.join(data_desc.data_path, value)
         sub_input = Node(interface=SelectFiles(templates, base_directory=data_desc.data_path), name=name)
-        print(f"[{name}] added to workflow")
+        print(f"[LOG] [{name}] added to workflow")
         return sub_input
 
     def get_group_input(self, config: str, data_desc: DataDescriptor):
         name = "group_input"
-        print(f"Implementing [{name}]...")
+        print(f"[LOG] Implementing [{name}]...")
         group_input = Node(
             IdentityInterface(fields=['contrasts']),
             name=name
@@ -314,29 +315,29 @@ class WorkflowService:
             if subject not in data_desc.no_group_subjects:
                 contrasts.append(os.path.join(data_desc.result_path, config, f'_subject_id_{subject}', CONTRAST_NII))
             else:
-                print(f"Subject [{subject}] will be excluded from group analysis")
+                print(f"[LOG] Subject [{subject}] will be excluded from group analysis")
         group_input.inputs.contrasts = contrasts
-        print(f"[{name}] added to workflow")
+        print(f"[LOG] [{name}] added to workflow")
         return group_input
 
     def get_subject_output(self, path: str):
         name = "subject_output"
-        print(f"Implementing [{name}]...")
+        print(f"[LOG] Implementing [{name}]...")
         datasink = Node(interface=DataSink(base_directory=path), name=name)
         datasink.inputs.regexp_substitutions = [(r'spmT_0001.nii', RESULT_NII)]
-        print(f"[{name}] added to workflow")
+        print(f"[LOG] [{name}] added to workflow")
         return datasink
 
     def get_group_output(self, path: str):
         name = "group_output"
-        print(f"Implementing [{name}]...")
+        print(f"[LOG] Implementing [{name}]...")
         datasink = Node(interface=DataSink(base_directory=path), name=name)
-        print(f"[{name}] added to workflow")
+        print(f"[LOG] [{name}] added to workflow")
         return datasink
 
     def get_gunzip(self, type: str):
         name = f'gunzip_{type}'
-        print(f"Implementing [{name}]...")
+        print(f"[LOG] Implementing [{name}]...")
 
         def gunzip(in_file):
             import os
@@ -356,7 +357,7 @@ class WorkflowService:
                            output_names=['out_file'],
                            function=gunzip),
                   name=name)
-        print(f"[{name}] added to workflow")
+        print(f"[LOG] [{name}] added to workflow")
         return gz
 
     def get_prealign_node(self):

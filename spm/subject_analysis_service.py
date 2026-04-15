@@ -24,17 +24,17 @@ class SubjectAnalysisService:
     tool = 'spm'
     def get_nodes(self, features: list, data_desc: DataDescriptor) -> Dict[str, Node]:
 
-        print("Implementing subject level analysis nodes...")
+        print(f"[LOG] Implementing subject level analysis nodes...")
         nodes = {}
         for step in self.steps:
             if step == 'sub_level_spec_realignment_parameters':
                 if f"signal_modeling/nuisance_regressors" not in features:
                     continue
-            print(f"Implementing [{step}]...")
+            print(f"[LOG] Implementing [{step}]...")
             node = self.get_node(step, features, data_desc)
             if node:
                 nodes[step] = node
-            print(f"[{step}] added to workflow")
+            print(f"[LOG] [{step}] added to workflow")
 
         return nodes
 
@@ -123,7 +123,7 @@ class SubjectAnalysisService:
                 squared_derivatives = derivatives ** 2
                 expanded = np.column_stack((motion, derivatives, motion ** 2, squared_derivatives))
             else:
-                raise ValueError(f"[{nb_regressors}] regressors not implemented")
+                raise ValueError(f"[LOG] [{nb_regressors}] regressors not implemented")
             np.savetxt(output_file, expanded)
             return output_file
 

@@ -69,7 +69,7 @@ class PostprocessService:
 
         total = len(inputs)
 
-        print(f"Summing the [{total}] images...")
+        print(f"[LOG] Summing the [{total}] images...")
         for i in range(0, total, batch_size):
             batch_paths = inputs[i:i + batch_size]
             batch_images = [nib.load(path).get_fdata() for path in batch_paths]
@@ -87,14 +87,14 @@ class PostprocessService:
                 total_sum += batch_sum
 
             count += len(batch_paths)
-            print(f"Summed [{count} / {total}] images")
+            print(f"[LOG] Summed [{count} / {total}] images")
 
-        print("Calculating the mean image...")
+        print(f"[LOG] Calculating the mean image...")
         mean_image = total_sum / count
 
-        print("Creating a new NIfTI image with the mean data...")
+        print(f"[LOG] Creating a new NIfTI image with the mean data...")
         mean_nifti = nib.Nifti1Image(mean_image, affine=nib.load(inputs[0]).affine)
-        print("Mean image created.")
+        print(f"[LOG] Mean image created.")
         return mean_nifti
 
     def get_train_test(self, path: str, dataset: pd.DataFrame, iteration: int):
@@ -103,14 +103,14 @@ class PostprocessService:
         X = dataset['id']
         y = dataset['id']
         X_id_train_pool, X_id_test, _, _ = train_test_split(X, y, test_size=0.2)
-        print(f"Iteration [{iteration}] - Testing size [{len(X_id_test)}]")
+        print(f"[LOG] Iteration [{iteration}] - Testing size [{len(X_id_test)}]")
         self.write_subset(X_id_test, dataset, path, f'test_{iteration}')
 
         for prop in proportions:
 
             train_size = int(prop * len(X_id_train_pool))
 
-            print(f"Iteration [{iteration}] - Training size [{train_size}/{len(X_id_train_pool)}]")
+            print(f"[LOG] Iteration [{iteration}] - Training size [{train_size}/{len(X_id_train_pool)}]")
 
             indices = np.random.choice(
                 X_id_train_pool.index, size=train_size, replace=False
@@ -129,11 +129,11 @@ class PostprocessService:
             files.append(os.path.join(path, conf_id, RESULT_NII))
         mean_img = self.get_mean_image(files, 20)
         nib.save(mean_img, mean_path)
-        print(f"Computing correlations to mean image for [{size}] results...")
+        print(f"[LOG] Computing correlations to mean image for [{size}] results...")
         if 'pearson_from_mean' not in filtered_ds.columns:
-            print(f"No [pearson_from_mean] column found in found in dataset")
+            print(f"[LOG] No [pearson_from_mean] column found in found in dataset")
         if 'spearman_from_mean' not in filtered_ds.columns:
-            print(f"No [spearman_from_mean] column found in found in dataset")
+            print(f"[LOG] No [spearman_from_mean] column found in found in dataset")
         for index, row in filtered_ds.iterrows():
             img = os.path.join(path, row['id'], RESULT_NII)
             if 'pearson_from_mean' in filtered_ds.columns:
@@ -142,4 +142,4 @@ class PostprocessService:
                 filtered_ds.at[index, 'spearman_from_mean'] = self.corr_srv.get_correlation_coefficient(mean_path, img, 'spearman')
         filtered_ds.to_csv(os.path.join(path, ds_name),
                        index=False, sep=';')
-        print(f"Written to [{ds_name}].")
+        print(f"[LOG] Written to [{ds_name}].")

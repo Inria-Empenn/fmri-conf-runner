@@ -40,11 +40,11 @@ class FileService:
             with open(path, 'r') as file:
                 return json.load(file)
         except FileNotFoundError:
-            print("File not found.")
+            print("[LOG] File not found.")
         except json.JSONDecodeError:
-            print("Error decoding JSON.")
+            print("[LOG] Error decoding JSON.")
         except Exception as e:
-            print(f"Unknown error: {e}")
+            print(f"[LOG] Unknown error: {e}")
 
     def read_data_descriptor(self, path: str) -> DataDescriptor:
         data = self.read_json(path)
@@ -73,7 +73,7 @@ class FileService:
             writer.writerow(configs[0].keys())
             for config in configs:
                 writer.writerow(config.values())
-        print(f"Configuration(s) saved to [{file}]")
+        print(f"[LOG] Configuration(s) saved to [{file}]")
         return file
 
     def read_config(self, path: str, index: int, step: int) -> List[dict]:
@@ -84,7 +84,7 @@ class FileService:
             for column, value in row.items():
                 elements[column] = value
             configs.append(elements)
-        print(f"Selecting [{len(configs)}/{len(df)}] configurations starting from [{index}]")
+        print(f"[LOG] Selecting [{len(configs)}/{len(df)}] configurations starting from [{index}]")
         return configs
 
     def write_dataframe2csv(self, df: pd.DataFrame, path):
@@ -103,14 +103,14 @@ class FileService:
         merged = pd.concat(dataframes, ignore_index=True)
         self.write_dataframe2csv(merged, file)
 
-        print(f"[{len(ids)}] configurations merged and saved to [{file}]")
+        print(f"[LOG] [{len(ids)}] configurations merged and saved to [{file}]")
         return file
 
     def write_mean_image(self, images: List[str], path):
         matrices = []
         header = None
         affine = None
-        print(f"Computing mean nifti image from [{len(images)}] images...")
+        print(f"[LOG] Computing mean nifti image from [{len(images)}] images...")
         for img in images:
             loaded = nib.load(img)
             matrices.append(loaded.get_fdata())
@@ -119,7 +119,7 @@ class FileService:
                 affine = loaded.affine
         mean = nib.Nifti1Image(np.average(matrices, axis=0), affine, header)
         nib.save(mean, path)
-        print(f"Mean nifti image written to [{path}]")
+        print(f"[LOG] Mean nifti image written to [{path}]")
         return os.path.join(path)
 
     def hash_config(self, config: dict):
@@ -136,7 +136,7 @@ class FileService:
             if not os.path.exists(result) or not os.path.exists(contrast):
                 subjects.append(sub)
             else:
-                print(f"Results found for subject [{sub}] and config [{hashconf}], skipping.")
+                print(f"[LOG] Results found for subject [{sub}] and config [{hashconf}], skipping.")
         return subjects
 
     def check_mask(self, subjects, data_desc: DataDescriptor, hashconf) -> list :
@@ -145,16 +145,16 @@ class FileService:
             result = os.path.join(data_desc.result_path, hashconf, f"_subject_id_{sub}", RESULT_NII)
             mask = os.path.join(data_desc.result_path, hashconf, f"_subject_id_{sub}", MASK_NII)
             if not os.path.exists(result) or not os.path.exists(mask):
-                print(f"[MASK] No [mask.nii] found for subject [{sub}] and config [{hashconf}].")
+                print(f"[LOG][{hashconf}][MASK] No [mask.nii] found for subject [{sub}].")
             else:
                 sub_mask_sum = np.sum(image.load_img(mask).get_fdata())
                 mni_mask_sum = np.sum(image.load_img(self.mni_mask).get_fdata())
                 coverage = sub_mask_sum / mni_mask_sum
 
-                print(f"[MASK] Subject [{sub}] mask coverage is [{(coverage * 100)}%]")
+                print(f"[LOG][{hashconf}][MASK] Subject [{sub}] mask coverage is [{(coverage * 100)}%]")
 
                 if coverage < 0.8:
-                    print(f"[MASK] Subject [{sub}] is tagged as misaligned.")
+                    print(f"[LOG][{hashconf}][MASK] Subject [{sub}] is tagged as misaligned.")
                     ko_subjects.append(sub)
         return ko_subjects
 
