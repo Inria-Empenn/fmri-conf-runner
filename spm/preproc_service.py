@@ -127,9 +127,9 @@ class PreprocService:
         node = Node(interface=NewSegment(), name=name)
         node.features = [name, f'{name}/tool', f'{name}/tool/{self.tool}']
         # Gray Matter
-        tissue1 = (self.tpm_file, 1), 2, (True, False), (False, False)
+        tissue1 = (self.tpm_file, 1), 1, (True, False), (False, False)
         # White Matter
-        tissue2 = (self.tpm_file, 2), 2, (True, False), (False, False)
+        tissue2 = (self.tpm_file, 2), 1, (True, False), (False, False)
         # CSF
         tissue3 = (self.tpm_file, 3), 2, (True, False), (False, False)
         # Bone
@@ -137,7 +137,7 @@ class PreprocService:
         # Soft Tissue
         tissue5 = (self.tpm_file, 5), 4, (True, False), (False, False)
         # Air/Background
-        tissue6 = (self.tpm_file, 6), 2, (True, False), (False, False)
+        tissue6 = (self.tpm_file, 6), 2, (False, False), (False, False)
         node.inputs.tissues = [tissue1, tissue2, tissue3, tissue4, tissue5, tissue6]
         node.inputs.write_deformation_fields = [False, True]
         return node
