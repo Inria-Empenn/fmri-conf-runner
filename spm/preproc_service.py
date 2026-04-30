@@ -1,6 +1,6 @@
 import os
 
-from nipype import Node
+from nipype import Node, Function
 from nipype.interfaces.spm import Smooth, Coregister, NewSegment, SliceTiming, Normalize12, Realign
 from nipype.interfaces.spm.base import Info as SPMInfo
 from typing import Dict
@@ -35,8 +35,8 @@ class PreprocService:
     }
 
     interpolation = {
-        "nearest_neighbour" : 0,
-        "trilinear" : 1,
+        "nearest_neighbour": 0,
+        "trilinear": 1,
         "bspline": 4
     }
 
@@ -114,6 +114,7 @@ class PreprocService:
     def get_coregistration(self, features: list):
         name = "coregistration"
         node = Node(interface=Coregister(), name=name)
+        node.inputs.jobtype = 'estimate'
         node.features = [name, f'{name}/tool', f'{name}/tool/{self.tool}']
         node.features.append(f"{name}/cost_function")
         function = self.get_feature_end(f"{name}/cost_function", features)

@@ -72,13 +72,8 @@ class RunService:
                 self.workflow_srv.run(sub_workflow, conf_dir, nb_procs)
 
                 ko_subjects = self.file_srv.check_mask(subjects, data_desc, hashconf)
-
-                print(f"[LOG][RUN][{hashconf}] [{len(ko_subjects)}] subjects will be prealigned")
                 if len(ko_subjects) > 0:
-                    sub_workflow = self.workflow_srv.build_subject_workflow(config, ko_subjects, data_desc, hashconf, True)
-                    self.workflow_srv.run(sub_workflow, conf_dir, nb_procs)
-                    ko_subjects = self.file_srv.check_mask(ko_subjects, data_desc, hashconf)
-                    print(f"[LOG][RUN][{hashconf}] [{len(ko_subjects)}] subjects are still under mask coverage target.")
+                    print(f"[LOG][WARNING][RUN][{hashconf}] [{len(ko_subjects)}] subjects are under mask coverage target.")
 
             if total_subs > 1:
                 # group-level
