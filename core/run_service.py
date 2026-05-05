@@ -68,7 +68,7 @@ class RunService:
                 self.file_srv.write_config2csv(config, os.path.join(conf_dir, CONFIG_CSV))
 
                 # subject-level
-                sub_workflow = self.workflow_srv.build_subject_workflow(config, subjects, data_desc, hashconf)
+                sub_workflow = self.workflow_srv.build_subject_workflow(config, subjects, data_desc, hashconf, False)
                 self.workflow_srv.run(sub_workflow, conf_dir, nb_procs)
 
                 ko_subjects = self.file_srv.check_mask(subjects, data_desc, hashconf)

@@ -35,7 +35,7 @@ class WorkflowService:
         workflow.run(self.PLUGIN, plugin_args={'n_procs': nb_procs})
         print(f"[LOG][WORKFLOW] Workflow [{workflow.name}] results written to [{path}].")
 
-    def build_subject_workflow(self, config: dict, subjects: list, data_descriptor: DataDescriptor, name: str) -> Workflow:
+    def build_subject_workflow(self, config: dict, subjects: list, data_descriptor: DataDescriptor, name: str, prealign=False) -> Workflow:
 
         workflow = Workflow(name=f'Subject-workflow-{name}')
 
@@ -64,27 +64,39 @@ class WorkflowService:
         workflow.connect(src_infos, 'subject_id', inputs, 'subject_id')
 
         gunzip_func = self.get_gunzip('func')
-        # inputs -> gunzip_func
-        workflow.connect(inputs, 'func',
-                         gunzip_func, 'in_file')
 
         gunzip_anat = self.get_gunzip('anat')
         # inputs -> gunzip_anat
         workflow.connect(inputs, 'anat',
                          gunzip_anat, 'in_file')
 
-        prealign = self.get_prealign()
+        if prealign:
+            prealign = self.get_prealign()
 
-        # gunzip_func -> prealign (source=func)
+            gunzip_func_prealign = self.get_gunzip('func_prealign')
+
+            # inputs -> gunzip_func_prealign
+            workflow.connect(inputs, 'func',
+                             gunzip_func_prealign, 'in_file')
+
+            # gunzip_func_prealign -> prealign (source=func)
+            workflow.connect(gunzip_func_prealign, 'out_file',
+                             prealign, 'source')
+            # gunzip_anat -> prealign (target=anat)
+            workflow.connect(gunzip_anat, 'out_file',
+                             prealign, 'target')
+            # prealign -> gunzip_func
+            workflow.connect(prealign, 'prealigned_source',
+                             gunzip_func, 'in_file')
+        else:
+            # inputs -> gunzip_func
+            workflow.connect(inputs, 'func',
+                             gunzip_func, 'in_file')
+
+        # gunzip_func -> motion_correction_realignment (func)
         workflow.connect(gunzip_func, 'out_file',
-                         prealign, 'source')
-        # gunzip_anat -> prealign (target=anat)
-        workflow.connect(gunzip_anat, 'out_file',
-                         prealign, 'target')
-
-        # prealign -> motion_correction_realignment (func)
-        workflow.connect(prealign, 'prealigned_source',
                          nodes['motion_correction_realignment'], SPM.Realign.Input.in_files)
+
 
         # distorsion_correction
         # Ignore for now
@@ -373,7 +385,7 @@ class WorkflowService:
             new_affine = src_img.affine.copy()
             new_affine[:3, 3] += diff
 
-            out_name = "prealigned_" + os.path.basename(source)
+            out_name = os.path.basename(source)
             out_path = os.path.abspath(out_name)
 
             new_img = Nifti1Image(src_img.get_fdata(), new_affine, src_img.header)
