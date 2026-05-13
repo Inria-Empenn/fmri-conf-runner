@@ -42,7 +42,6 @@ class RunService:
 
         if ref is not None:
             hash_configs['ref'] = ref
-            # self.run_ref(data_desc, ref, nb_procs)
 
         for config in configs:
             hashconf = self.file_srv.hash_config(config)

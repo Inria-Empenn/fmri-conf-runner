@@ -1,6 +1,7 @@
 class TaskService:
 
     def get_task_contrasts(self, name: str):
+        print(f"[LOG][TASK] Task is [{name.lower()}].")
         if name.lower() == "auditory":
             return self.get_auditory_contrasts()
         if name.lower() == "motor":

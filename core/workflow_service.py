@@ -88,6 +88,7 @@ class WorkflowService:
             # prealign -> gunzip_func
             workflow.connect(prealign, 'prealigned_source',
                              gunzip_func, 'in_file')
+            print(f"[LOG][WORKFLOW][{name}] Prealign node added to pipeline")
         else:
             # inputs -> gunzip_func
             workflow.connect(inputs, 'func',
