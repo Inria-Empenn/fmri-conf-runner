@@ -90,6 +90,8 @@ class SubjectAnalysisService:
             if f"{name}/temporal_noise_autocorrelation/FAST" in features:
                 design.inputs.model_serial_correlations = 'FAST'
                 design.features.append(f"{name}/temporal_noise_autocorrelation/FAST")
+        else:
+            design.inputs.model_serial_correlations = 'none'
 
         design.inputs.mask_threshold = 0.8
         design.inputs.volterra_expansion_order = 1
