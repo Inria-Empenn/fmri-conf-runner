@@ -371,9 +371,10 @@ class WorkflowService:
             import os
 
             def get_center(img):
-                data = img.get_fdata()
                 if len(img.shape) > 3:
-                    data = np.mean(data)
+                    img = image.mean_img(img)
+                data = img.get_fdata()
+                data = np.nan_to_num(data, nan=0.0, posinf=0.0, neginf=0.0)
                 non_zero = data[data > 0]
                 thresh = np.median(non_zero) if len(non_zero) > 0 else 0
                 indices = np.argwhere(data > thresh)
