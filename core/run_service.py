@@ -4,7 +4,7 @@ from typing import Optional, List
 
 import nipype
 from core.data_descriptor import DataDescriptor
-from core.file_service import FileService, CONFIG_CSV
+from core.file_service import FileService, CONFIG_CSV, COVER_TGT
 from core.workflow_service import WorkflowService
 
 class RunService:
@@ -72,7 +72,11 @@ class RunService:
 
                 ko_subjects = self.file_srv.check_mask(subjects, data_desc, hashconf)
                 if len(ko_subjects) > 0:
-                    print(f"[LOG][WARNING][RUN][{hashconf}] [{len(ko_subjects)}] subjects are under mask coverage target.")
+                    print(f"[LOG][WARNING][RUN][{hashconf}] [{len(ko_subjects)}] subjects are under mask coverage target ([{(COVER_TGT * 100)}%]) and will be reprocessed with prealign step")
+                    sub_workflow = self.workflow_srv.build_subject_workflow(config, ko_subjects, data_desc, hashconf, True)
+                    self.workflow_srv.run(sub_workflow, conf_dir, nb_procs)
+                    still_ko_subjects = self.file_srv.check_mask(ko_subjects, data_desc, hashconf)
+                    print(f"[LOG][WARNING][RUN][{hashconf}] [{len(still_ko_subjects)}] subjects are still under mask coverage target ([{(COVER_TGT * 100)}%]) after prealign.")
 
             if total_subs > 1:
                 # group-level

@@ -27,6 +27,7 @@ RESULT_NII = 'spmT_0001.nii'
 MEAN_NII = 'mean_result.nii'
 CONTRAST_NII = 'con_0001.nii'
 MASK_NII = 'mask.nii'
+COVER_TGT = 0.8
 
 
 run_pattern = '[0-3][0-9][0-1][1-9]202[0-9]_[0-2][1-9][0-5][0-9][0-5][0-9]'
@@ -153,7 +154,7 @@ class FileService:
 
                 print(f"[LOG][FILE][MASK][{hashconf}] Subject [{sub}] mask coverage is [{(coverage * 100)}%]")
 
-                if coverage < 0.8:
+                if coverage < COVER_TGT:
                     print(f"[LOG][FILE][MASK][{hashconf}] Subject [{sub}] is tagged as misaligned.")
                     ko_subjects.append(sub)
         return ko_subjects
