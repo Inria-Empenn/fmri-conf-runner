@@ -365,18 +365,20 @@ class WorkflowService:
         def align_centers(source, target):
             from nibabel import Nifti1Image
             from nibabel import save
+            from nibabel import affines
             import nilearn.image as image
             import numpy as np
             import os
 
             def get_center(img):
                 data = img.get_fdata()
-                if len(data.shape) == 4:
-                    data = np.mean(data, axis=3)
-                affine = img.affine
-                indices = np.argwhere(data > np.mean(data))
-                v_center = indices.mean(axis=0)
-                return affine @ np.append(v_center, 1)
+                if len(img.shape) > 3:
+                    data = np.mean(data)
+                non_zero = data[data > 0]
+                thresh = np.median(non_zero) if len(non_zero) > 0 else 0
+                indices = np.argwhere(data > thresh)
+                com_voxel = indices.mean(axis=0)
+                return affines.apply_affine(img.affine, com_voxel)
 
             src_img = image.load_img(source)
             src_center = get_center(src_img)
