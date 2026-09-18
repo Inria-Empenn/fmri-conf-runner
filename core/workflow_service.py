@@ -1,20 +1,12 @@
-import gzip
 import os
-import shutil
 
-import nibabel as nib
-from nipype import Node, IdentityInterface, SelectFiles, DataSink, Merge, Function
+from nipype import Node, IdentityInterface, SelectFiles, DataSink, Function
 from nipype import Workflow
-from nipype.algorithms.misc import Gunzip
-from nipype.interfaces.minc import Calc
-from nipype.interfaces.spm import Coregister
 from nipype.interfaces.spm.base import Info as SPMInfo
-from traits.trait_base import Undefined, _Undefined
 
-import spm
 from core.constants import SPM
 from core.data_descriptor import DataDescriptor
-from core.file_service import RESULT_NII, CONTRAST_NII, FileService
+from core.file_service import RESULT_NII, CONTRAST_NII
 from spm.group_analysis_service import GroupAnalysisService
 from spm.preproc_service import PreprocService
 from spm.subject_analysis_service import SubjectAnalysisService
@@ -365,21 +357,44 @@ class WorkflowService:
         def align_centers(source, target):
             from nibabel import Nifti1Image
             from nibabel import save
-            from nibabel import affines
             import nilearn.image as image
-            import numpy as np
             import os
 
             def get_center(img):
-                if len(img.shape) > 3:
-                    img = image.mean_img(img)
-                data = img.get_fdata()
+                import numpy as np
+                from nibabel.affines import apply_affine
+
+                if img.ndim == 4:
+                    # 4D = func : use mean image
+                    data = np.mean(img.get_fdata(), axis=3)
+                else:
+                    # anat
+                    data = img.get_fdata()
+
+                # NaN -> 0, Inf -> 0
                 data = np.nan_to_num(data, nan=0.0, posinf=0.0, neginf=0.0)
-                non_zero = data[data > 0]
-                thresh = np.median(non_zero) if len(non_zero) > 0 else 0
-                indices = np.argwhere(data > thresh)
-                com_voxel = indices.mean(axis=0)
-                return affines.apply_affine(img.affine, com_voxel)
+                positive_data = data[data > 0]
+                if positive_data.size == 0:
+                    # no data over 0
+                    # v_center = geometric center of the image
+                    v_center = (np.array(data.shape[:3]) - 1) / 2.0
+                    return apply_affine(img.affine, v_center)
+
+                # median of all voxels value
+                threshold = np.percentile(positive_data, 50)
+                # mask with only data over threshold
+                weights = np.maximum(data - threshold, 0)
+
+                if weights.sum() == 0:
+                    # no data over threshold
+                    # v_center = geometric center of the image
+                    v_center = (np.array(data.shape[:3]) - 1) / 2.0
+                    return apply_affine(img.affine, v_center)
+
+                grid = np.indices(data.shape[:3])
+                v_center = np.array([np.average(grid[i], weights=weights) for i in range(3)])
+                # matrix multiplication
+                return apply_affine(img.affine, v_center)
 
             src_img = image.load_img(source)
             src_center = get_center(src_img)
