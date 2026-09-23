@@ -27,7 +27,7 @@ RESULT_NII = 'spmT_0001.nii'
 MEAN_NII = 'mean_result.nii'
 CONTRAST_NII = 'con_0001.nii'
 MASK_NII = 'mask.nii'
-COVER_TGT = 0.8
+COVER_TGT = 80
 
 
 run_pattern = '[0-3][0-9][0-1][1-9]202[0-9]_[0-2][1-9][0-5][0-9][0-5][0-9]'
@@ -140,24 +140,41 @@ class FileService:
                 print(f"[LOG][FILE] Results found for subject [{sub}] and config [{hashconf}], skipping.")
         return subjects
 
-    def check_mask(self, subjects, data_desc: DataDescriptor, hashconf) -> list :
+    def check_subjects_mask(self, subjects, data_desc: DataDescriptor, hashconf) -> list :
         ko_subjects = []
+
         for sub in subjects:
-            result = os.path.join(data_desc.result_path, hashconf, f"_subject_id_{sub}", RESULT_NII)
             mask = os.path.join(data_desc.result_path, hashconf, f"_subject_id_{sub}", MASK_NII)
-            if not os.path.exists(result) or not os.path.exists(mask):
+            if not os.path.exists(mask):
                 print(f"[LOG][FILE][MASK][{hashconf}] No [mask.nii] found for subject [{sub}].")
             else:
-                sub_mask_sum = np.sum(image.load_img(mask).get_fdata())
-                mni_mask_sum = np.sum(image.load_img(self.mni_mask).get_fdata())
-                coverage = sub_mask_sum / mni_mask_sum
+                coverage = self.get_mask_coverage(mask)
 
-                print(f"[LOG][FILE][MASK][{hashconf}] Subject [{sub}] mask coverage is [{(coverage * 100)}%]")
+                print(f"[LOG][FILE][MASK][{hashconf}] Subject [{sub}] mask coverage is [{(coverage)}%]")
 
                 if coverage < COVER_TGT:
                     print(f"[LOG][FILE][MASK][{hashconf}] Subject [{sub}] is tagged as misaligned.")
                     ko_subjects.append(sub)
         return ko_subjects
 
+    def check_group_mask(self, data_desc: DataDescriptor, hashconf) -> bool:
+        mask = os.path.join(data_desc.result_path, hashconf, MASK_NII)
+        if not os.path.exists(mask):
+            print(f"[LOG][FILE][MASK][{hashconf}] No group [mask.nii] found for config [{hashconf}].")
+            return False
+        coverage = self.get_mask_coverage(mask)
+
+        print(f"[LOG][FILE][MASK][{hashconf}] Mask coverage is [{(coverage)}%]")
+
+        if coverage >= COVER_TGT:
+            return True
+
+        print(f"[LOG][FILE][MASK][{hashconf}] Group map is tagged as misaligned.")
+        return False
+
+    def get_mask_coverage(self, mask):
+        sub_mask_sum = np.sum(image.load_img(mask).get_fdata())
+        mni_mask_sum = np.sum(image.load_img(self.mni_mask).get_fdata())
+        return (sub_mask_sum / mni_mask_sum)*100
 
 

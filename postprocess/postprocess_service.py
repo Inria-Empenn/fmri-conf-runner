@@ -8,13 +8,14 @@ from typing import List
 
 from pandas import DataFrame
 
-from core.file_service import FileService, RESULT_NII, MEAN_NII
+from core.file_service import FileService, RESULT_NII, MEAN_NII, MASK_NII
 from postprocess.correlation_service import CorrelationService
 from sklearn.model_selection import train_test_split
 
 
 class PostprocessService:
     corr_srv = CorrelationService()
+    file_srv = FileService()
 
     def get_dataset(self, path, corr: pd.DataFrame) -> pd.DataFrame:
         dataframes = []
@@ -24,6 +25,7 @@ class PostprocessService:
             config = os.path.join(path, str(conf_id), 'config.csv')
             df = pd.read_csv(config, delimiter=';').astype(bool)
             df['id'] = conf_id
+            df['mask_coverage'] = self.get_mask_coverage(path, conf_id)
             df['pearson_from_ref'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'ref'), 'pearson'].values[0]
             df['spearman_from_ref'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'ref'), 'spearman'].values[0]
             df['pearson_from_mean'] = corr.loc[(corr['source'] == conf_id) & (corr['target'] == 'mean'), 'pearson'].values[0]
@@ -41,6 +43,13 @@ class PostprocessService:
             spear = self.corr_srv.get_correlation_coefficient(src_nii, tgt_nii, 'spearman')
             pear = self.corr_srv.get_correlation_coefficient(src_nii, tgt_nii, 'pearson')
             return src, tgt, spear, pear
+
+    def get_mask_coverage(self, path, conf_id):
+        mask = os.path.join(path, conf_id, MASK_NII)
+        if not os.path.exists(mask):
+            print(f"[LOG][FILE][MASK][{conf_id}] No group [mask.nii] found for config [{conf_id}].")
+            return None
+        return self.file_srv.get_mask_coverage(mask)
 
     def get_all_correlations(self, path, ids: List[str], nb_cores: int) -> pd.DataFrame:
         ids.append('mean')

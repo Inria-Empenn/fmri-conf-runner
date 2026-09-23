@@ -70,18 +70,19 @@ class RunService:
                 sub_workflow = self.workflow_srv.build_subject_workflow(config, subjects, data_desc, hashconf, False)
                 self.workflow_srv.run(sub_workflow, conf_dir, nb_procs)
 
-                ko_subjects = self.file_srv.check_mask(subjects, data_desc, hashconf)
+                ko_subjects = self.file_srv.check_subjects_mask(subjects, data_desc, hashconf)
                 if len(ko_subjects) > 0:
                     print(f"[LOG][WARNING][RUN][{hashconf}] [{len(ko_subjects)}] subjects are under mask coverage target ([{(COVER_TGT * 100)}%]) and will be reprocessed with prealign step")
                     sub_workflow = self.workflow_srv.build_subject_workflow(config, ko_subjects, data_desc, hashconf, True)
                     self.workflow_srv.run(sub_workflow, conf_dir, nb_procs)
-                    still_ko_subjects = self.file_srv.check_mask(ko_subjects, data_desc, hashconf)
+                    still_ko_subjects = self.file_srv.check_subjects_mask(ko_subjects, data_desc, hashconf)
                     print(f"[LOG][WARNING][RUN][{hashconf}] [{len(still_ko_subjects)}] subjects are still under mask coverage target ([{(COVER_TGT * 100)}%]) after prealign.")
 
             if total_subs > 1:
                 # group-level
                 group_workflow = self.workflow_srv.build_group_workflow(config, data_desc, hashconf)
                 self.workflow_srv.run(group_workflow, conf_dir, nb_procs)
+                self.file_srv.check_group_mask(data_desc, hashconf)
 
             cpt += 1
             self.print_elapsed(start, nb_procs, hashconf)

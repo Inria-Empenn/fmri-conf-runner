@@ -231,6 +231,7 @@ class WorkflowService:
         workflow.base_dir = data_descriptor.work_path
 
         inputs = self.get_group_input(name, data_descriptor)
+        output = self.get_group_output(output_path)
 
         print(f"[LOG][WORKFLOW][{name}] Connecting group-level analysis nodes...")
 
@@ -242,6 +243,11 @@ class WorkflowService:
         workflow.connect(nodes['group_level_design'], SPM.FactorialDesign.Output.spm_mat_file,
                          nodes['group_level_model'], SPM.EstimateModel.Input.spm_mat_file)
 
+        # group_level_model -> output
+        workflow.connect(nodes['group_level_model'], SPM.EstimateModel.Output.mask_image,
+                         output,
+                         f'{output_path}.@mask_image')
+
         # group_level_model -> group_level_contrasts
         workflow.connect(nodes['group_level_model'], SPM.EstimateModel.Output.spm_mat_file,
                          nodes['group_level_contrasts'], SPM.EstimateContrast.Input.spm_mat_file)
@@ -252,7 +258,7 @@ class WorkflowService:
 
         # group_level_contrasts -> output
         workflow.connect(nodes['group_level_contrasts'], SPM.EstimateContrast.Output.spmT_images,
-                         self.get_group_output(output_path), f'{output_path}.@spmT_images')
+                         output, f'{output_path}.@spmT_images')
 
         print(f"[LOG][WORKFLOW][{name}] Group-level workflow ready.")
 
