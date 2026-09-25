@@ -140,6 +140,15 @@ class FileService:
                 print(f"[LOG][FILE] Results found for subject [{sub}] and config [{hashconf}], skipping.")
         return subjects
 
+    def has_group_results(self, data_desc: DataDescriptor, hashconf) -> bool:
+        result = os.path.join(data_desc.result_path, hashconf, RESULT_NII)
+        contrast = os.path.join(data_desc.result_path, hashconf, CONTRAST_NII)
+        if not os.path.exists(result) or not os.path.exists(contrast):
+            return False
+        print(f"[LOG][FILE] Group results found for config [{hashconf}].")
+        return True
+
+
     def check_subjects_mask(self, subjects, data_desc: DataDescriptor, hashconf) -> list :
         ko_subjects = []
 

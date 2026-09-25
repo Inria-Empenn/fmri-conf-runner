@@ -54,15 +54,14 @@ class RunService:
             return
 
         cpt = 1
-        print(f"[LOG][RUN] Running [{total_configs}] configurations for [{total_subs}] subjects to [{data_desc.result_path}]...")
         for hashconf, config in hash_configs.items():
             conf_dir = os.path.join(data_desc.result_path, hashconf)
-
-            print(f"[LOG][RUN] Running config [{hashconf}][{cpt}/{total_configs}]...")
             start = time.perf_counter()
 
             subjects = self.file_srv.filter_processed_subjects(data_desc, hashconf)
-            if len(subjects) > 0:
+            subs_cpt = len(subjects)
+            if subs_cpt > 0:
+                print(f"[LOG][RUN] Running config [{hashconf}][{cpt}/{total_configs}] for [{subs_cpt}/{total_subs}] subjects to [{data_desc.result_path}]...")
                 os.makedirs(conf_dir, exist_ok=True)
                 self.file_srv.write_config2csv(config, os.path.join(conf_dir, CONFIG_CSV))
 
@@ -78,7 +77,7 @@ class RunService:
                     still_ko_subjects = self.file_srv.check_subjects_mask(ko_subjects, data_desc, hashconf)
                     print(f"[LOG][WARNING][RUN][{hashconf}] [{len(still_ko_subjects)}] subjects are still under mask coverage target ([{(COVER_TGT * 100)}%]) after prealign.")
 
-            if total_subs > 1:
+            if subs_cpt > 1 or not self.file_srv.has_group_results(data_desc, hashconf):
                 # group-level
                 group_workflow = self.workflow_srv.build_group_workflow(config, data_desc, hashconf)
                 self.workflow_srv.run(group_workflow, conf_dir, nb_procs)
