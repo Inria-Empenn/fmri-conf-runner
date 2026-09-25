@@ -78,7 +78,6 @@ class RunService:
                     print(f"[LOG][WARNING][RUN][{hashconf}] [{len(still_ko_subjects)}] subjects are still under mask coverage target ([{(COVER_TGT * 100)}%]) after prealign.")
 
             if subs_cpt > 1 or not self.file_srv.has_group_results(data_desc, hashconf):
-                # group-level
                 group_workflow = self.workflow_srv.build_group_workflow(config, data_desc, hashconf)
                 self.workflow_srv.run(group_workflow, conf_dir, nb_procs)
                 self.file_srv.check_group_mask(data_desc, hashconf)

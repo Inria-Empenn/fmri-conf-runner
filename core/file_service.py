@@ -134,7 +134,8 @@ class FileService:
         for sub in data_desc.subjects:
             result = os.path.join(data_desc.result_path, hashconf, f"_subject_id_{sub}", RESULT_NII)
             contrast = os.path.join(data_desc.result_path, hashconf, f"_subject_id_{sub}", CONTRAST_NII)
-            if not os.path.exists(result) or not os.path.exists(contrast):
+            mask = os.path.join(data_desc.result_path, hashconf, f"_subject_id_{sub}", MASK_NII)
+            if not os.path.exists(result) or not os.path.exists(contrast) or not os.path.exists(mask):
                 subjects.append(sub)
             else:
                 print(f"[LOG][FILE] Results found for subject [{sub}] and config [{hashconf}], skipping.")
@@ -142,8 +143,8 @@ class FileService:
 
     def has_group_results(self, data_desc: DataDescriptor, hashconf) -> bool:
         result = os.path.join(data_desc.result_path, hashconf, RESULT_NII)
-        contrast = os.path.join(data_desc.result_path, hashconf, CONTRAST_NII)
-        if not os.path.exists(result) or not os.path.exists(contrast):
+        mask = os.path.join(data_desc.result_path, hashconf, MASK_NII)
+        if not os.path.exists(result) or not os.path.exists(mask):
             return False
         print(f"[LOG][FILE] Group results found for config [{hashconf}].")
         return True
