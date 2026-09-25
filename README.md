@@ -1,19 +1,25 @@
+# fmri-conf-runner
 
-# Build the docker image
+fmri-conf-runner is a framework providing methods to 
+- build neuroimaging analysis workflows from configurations descriptions 
+- schedule and run workflows 
+- postprocess workflows results for variability analysis 
+
+## Build the docker image
 
 ``` sh
 docker build . -t fmri-conf-runner
 ```
 
-# Generate a configuration CSV file
+## Generate a configuration CSV file
 
 See https://github.com/Inria-Empenn/fmri_feature_model/tree/master
 
-# Describe your data
+## Describe your data
 
 Modify `data_desc_sample.json` to your usage
 
-# Run configurations
+## Run configurations
 
 - Run configurations list from `/config.csv` file.
 - Read data from `/data`
@@ -36,7 +42,7 @@ Use `run_configs.sh`
 oarsub -S -n fmri-conf-runner ./run_configs.sh
 ```
 
-# Postprocess data
+## Postprocess data
 - Read data from `/results`
 - Write results to `/results`
   - 'mean_result.nii' : mean statistic map
