@@ -3,6 +3,7 @@ import os
 from nipype import Node, IdentityInterface, SelectFiles, DataSink, Function
 from nipype import Workflow
 from nipype.interfaces.spm.base import Info as SPMInfo
+from typing import Dict
 
 from core.constants import SPM
 from core.data_descriptor import DataDescriptor
@@ -17,15 +18,14 @@ class WorkflowService:
     sub_analysis_srv = SubjectAnalysisService()
     group_analysis_srv = GroupAnalysisService()
 
-    PLUGIN = 'MultiProc'
-
     MNI_file = os.path.join(SPMInfo.getinfo()['path'], 'canonical', 'avg152T1.nii')
 
-    def run(self, workflow: Workflow, path: str, nb_procs):
-
-        print(f"[LOG][WORKFLOW] Workflow [{workflow.name}] running...")
-        workflow.run(self.PLUGIN, plugin_args={'n_procs': nb_procs})
-        print(f"[LOG][WORKFLOW] Workflow [{workflow.name}] results written to [{path}].")
+    def build_master_workflow(self, workflows: dict):
+        master = Workflow(name="master")
+        for hashconf, workflow in workflows.items():
+            master.add_nodes([workflow])
+            print(f"[LOG][WORKFLOW] Workflow [{workflow.name}] added to master workflow...")
+        return master
 
     def build_subject_workflow(self, config: dict, subjects: list, data_descriptor: DataDescriptor, name: str, prealign=False) -> Workflow:
 
