@@ -117,6 +117,6 @@ class RunService:
         master = self.workflow_srv.build_master_workflow(workflows)
         start = time.perf_counter()
         print(f"[LOG][RUN] Running [{len(workflows)}] {level}-level workflows on [{nb_procs}] cores...")
-        master.run(self.PLUGIN, plugin_args={'n_procs': nb_procs})
+        master.run(self.PLUGIN, plugin_args={'n_procs': nb_procs, 'raise_insufficient': False, 'maxtasksperchild': 1})
         print(
             f"[LOG][RUN] [{len(workflows)}] {level}-level workflows finished - Elapsed time [{self.get_elapsed(start)}] - [{nb_procs}] cores")

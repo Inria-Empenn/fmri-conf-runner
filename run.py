@@ -1,6 +1,7 @@
 import os
 import signal
 import sys
+import time
 from argparse import ArgumentParser
 from datetime import datetime
 
@@ -50,8 +51,14 @@ def handle_kill(sig, frame):
 
 
 if __name__ == '__main__':
+    start = time.perf_counter()
     now = datetime.now().strftime("%d-%m-%Y %H:%M:%S.%f")[:-3]
     print(f"Start [{now}]")
     run()
     now = datetime.now().strftime("%d-%m-%Y %H:%M:%S.%f")[:-3]
-    print(f"End [{now}]")
+    elapsed = time.perf_counter() - start
+    HH = int(elapsed // 3600)
+    MM = int((elapsed % 3600) // 60)
+    SS = int(elapsed % 60)
+    sss = int((elapsed * 1000) % 1000)
+    print(f"End [{now}] - Elapsed time [{HH:02d}:{MM:02d}:{SS:02d}.{sss:03d}]")
