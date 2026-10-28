@@ -127,10 +127,11 @@ class RunService:
             else:
                 batch[hashconf] = workflows[hashconf]
                 batch_space += workspace_sizes.get(hashconf, 0)
-        batch_cpt += 1
-        print(f"LOG][RUN] Run [{len(batch)}/{len(workflows)}] configs as [batch-{batch_cpt}] - Needs [{(batch_space / (1024 ** 3)):.1f}/{(available_work_space / (1024 ** 3)):.1f} GB]...")
-        self.run_batch(batch, nb_procs, level)
-        self.file_srv.empty_path(work_path)
+        if len(batch) > 0:
+            batch_cpt += 1
+            print(f"LOG][RUN] Run [{len(batch)}/{len(workflows)}] configs as [batch-{batch_cpt}] - Needs [{(batch_space / (1024 ** 3)):.1f}/{(available_work_space / (1024 ** 3)):.1f} GB]...")
+            self.run_batch(batch, nb_procs, level)
+            self.file_srv.empty_path(work_path)
 
         print(
             f"[LOG][RUN] [{len(workflows)}] {level}-level workflows finished - Elapsed time [{self.get_elapsed(start)}] - [{nb_procs}] cores")
