@@ -67,6 +67,7 @@ class RunService:
             subjects[hashconf] = self.file_srv.filter_processed_subjects(data_desc, hashconf)
             subs_cpt = len(subjects[hashconf])
             workspace_sizes[hashconf] = self.file_srv.predict_config_workspace_size(subjects[hashconf], sub_sizes)
+            f"[LOG][RUN][{hashconf}] Needs [{workspace_sizes[hashconf]}] available in workdir."
             if subs_cpt > 0:
                 cpt += 1
                 print(f"[LOG][RUN] Building config [{hashconf}][{cpt}/{total_configs}] for [{subs_cpt}/{total_subs}] subjects to [{conf_dir}]...")
@@ -114,15 +115,20 @@ class RunService:
         print(f"[LOG][RUN] [{(available_work_space / (1024 ** 3)):.1f} GB] available in workdir [{work_path}]")
         batch = dict()
         batch_space = 0
+        batch_cpt = 0
         for hashconf in workflows.keys():
-            batch_space += workspace_sizes.get(hashconf, 0)
-            if batch_space > available_work_space and len(batch) > 0:
+            if (batch_space + workspace_sizes.get(hashconf, 0)) > available_work_space and len(batch) > 0:
+                batch_cpt += 1
+                print(f"LOG][RUN] Run [{len(batch)}/{len(workflows)}] configs as [batch-{batch_cpt}] - Needs [{(batch_space / (1024 ** 3)):.1f}/{(available_work_space / (1024 ** 3)):.1f} GB]...")
                 self.run_batch(batch, nb_procs, level)
                 self.file_srv.empty_path(work_path)
                 batch = dict()
                 batch_space = 0
             else:
                 batch[hashconf] = workflows[hashconf]
+                batch_space += workspace_sizes.get(hashconf, 0)
+        batch_cpt += 1
+        print(f"LOG][RUN] Run [{len(batch)}/{len(workflows)}] configs as [batch-{batch_cpt}] - Needs [{(batch_space / (1024 ** 3)):.1f}/{(available_work_space / (1024 ** 3)):.1f} GB]...")
         self.run_batch(batch, nb_procs, level)
         self.file_srv.empty_path(work_path)
 

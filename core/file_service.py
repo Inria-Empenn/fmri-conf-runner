@@ -31,7 +31,7 @@ CONTRAST_NII = 'con_0001.nii'
 MASK_NII = 'mask.nii'
 COVER_TGT = 80
 
-WORKSPACE_MULTIPLIER = 5
+WORKSPACE_MULTIPLIER = 6
 
 
 run_pattern = '[0-3][0-9][0-1][1-9]202[0-9]_[0-2][1-9][0-5][0-9][0-5][0-9]'
