@@ -3,7 +3,9 @@ import glob
 import hashlib
 import json
 import os
-from typing import Union, List
+import shutil
+from pathlib import Path
+from typing import Union, List, Dict
 
 import nibabel as nib
 import numpy as np
@@ -28,6 +30,8 @@ MEAN_NII = 'mean_result.nii'
 CONTRAST_NII = 'con_0001.nii'
 MASK_NII = 'mask.nii'
 COVER_TGT = 80
+
+WORKSPACE_MULTIPLIER = 5
 
 
 run_pattern = '[0-3][0-9][0-1][1-9]202[0-9]_[0-2][1-9][0-5][0-9][0-5][0-9]'
@@ -186,5 +190,48 @@ class FileService:
         sub_mask_sum = np.sum(image.load_img(mask).get_fdata())
         mni_mask_sum = np.sum(image.load_img(self.mni_mask).get_fdata())
         return (sub_mask_sum / mni_mask_sum)*100
+
+    def get_subject_input_sizes(self, data_desc: DataDescriptor) -> Dict[str, int]:
+        input_sizes = dict()
+        for sub in data_desc.subjects:
+            sub_size = 0
+            for key, value in data_desc.input.items():
+                path = os.path.join(data_desc.data_path, value.replace('{subject_id}', sub))
+                if not os.path.isfile(path):
+                    print(f"[LOG][FILE] Input [{path}] does not exists")
+                    return None
+                else:
+                    size = os.path.getsize(path)
+                    if size == 0:
+                        print(f"[LOG][FILE] Input [{path}] is empty")
+                        return None
+                    sub_size += size
+            input_sizes[sub] = sub_size
+        return input_sizes
+
+    def predict_config_workspace_size(self, subjects: list, sub_sizes: Dict[str, int]):
+        size = 0
+        for sub in subjects:
+            size += sub_sizes[sub]
+        return size * WORKSPACE_MULTIPLIER
+
+    def get_storage_space(self,path):
+        if not os.path.isdir(path):
+            print(f"[LOG][FILE] [{path}] is not a directory")
+            return 0
+        usage = shutil.disk_usage(path)
+        return usage.free
+
+    def empty_path(self, path):
+        if not os.path.isdir(path):
+            print(f"[LOG][FILE] [{path}] is not a directory")
+            return
+        path = Path(path)
+        for child in path.iterdir():
+            if child.is_dir() and not child.is_symlink():
+                shutil.rmtree(child)
+            else:
+                child.unlink()
+        print(f"[LOG][FILE] [{path}] has been emptied")
 
 

@@ -17,19 +17,6 @@ class RunService:
     CLEAN_OUTPUTS = 'true'
     PLUGIN = 'MultiProc'
 
-    def check_inputs(self, data_desc: DataDescriptor):
-        ok = True
-        for sub in data_desc.subjects:
-            for key, value in data_desc.input.items():
-                path = os.path.join(data_desc.data_path, value.replace('{subject_id}', sub))
-                if not os.path.isfile(path):
-                    print(f"[LOG][RUN] Input [{path}] does not exists")
-                    ok = False
-                elif os.path.getsize(path) == 0:
-                    print(f"[LOG][RUN] Input [{path}] is empty")
-                    ok = False
-        return ok
-
     def get_elapsed(self, start):
         elapsed = time.perf_counter() - start
         HH = int(elapsed // 3600)
@@ -43,7 +30,8 @@ class RunService:
         nipype.config.set('execution', 'remove_unnecessary_outputs', self.CLEAN_OUTPUTS)
         print(f"[LOG][RUN] NyPype ['remove_unnecessary_outputs'] is set to [{self.CLEAN_OUTPUTS}]")
 
-        if not self.check_inputs(data_desc):
+        sub_sizes = self.file_srv.get_subject_input_sizes(data_desc)
+        if sub_sizes is None:
             print(f"[LOG][RUN] Running interrupted.")
             return
 
@@ -71,11 +59,14 @@ class RunService:
 
         subjects = dict()
 
+        workspace_sizes = dict()
+
         for hashconf, config in hash_configs.items():
             conf_dir = os.path.join(data_desc.result_path, hashconf)
 
             subjects[hashconf] = self.file_srv.filter_processed_subjects(data_desc, hashconf)
             subs_cpt = len(subjects[hashconf])
+            workspace_sizes[hashconf] = self.file_srv.predict_config_workspace_size(subjects[hashconf], sub_sizes)
             if subs_cpt > 0:
                 cpt += 1
                 print(f"[LOG][RUN] Building config [{hashconf}][{cpt}/{total_configs}] for [{subs_cpt}/{total_subs}] subjects to [{conf_dir}]...")
@@ -88,7 +79,7 @@ class RunService:
             if subs_cpt > 0 or not self.file_srv.has_group_results(data_desc, hashconf):
                 group_workflows[hashconf] = self.workflow_srv.build_group_workflow(config, data_desc, hashconf)
 
-        self.run_all(sub_workflows, nb_procs, 'subject')
+        self.run_all(sub_workflows, nb_procs, 'subject', data_desc.work_path, workspace_sizes)
 
         ko_workflows = dict()
         for hashconf in sub_workflows.keys():
@@ -98,7 +89,7 @@ class RunService:
                     f"[LOG][WARNING][RUN][{hashconf}] [{len(ko_subjects)}] subjects are under mask coverage target ([{(COVER_TGT * 100)}%]) and will be reprocessed with prealign step")
                 ko_workflows[hashconf] = self.workflow_srv.build_subject_workflow(hash_configs[hashconf], ko_subjects, data_desc,
                                                                                   hashconf, True)
-        self.run_all(ko_workflows, nb_procs, 'subject')
+        self.run_all(ko_workflows, nb_procs, 'subject', data_desc.work_path, workspace_sizes)
 
         for hashconf in ko_workflows.keys():
             still_ko_subjects = self.file_srv.check_subjects_mask(subjects[hashconf], data_desc, hashconf)
@@ -106,17 +97,40 @@ class RunService:
                 print(
                     f"[LOG][WARNING][RUN][{hashconf}] [{len(still_ko_subjects)}] subjects are still under mask coverage target ([{(COVER_TGT * 100)}%]) after prealign.")
 
-        self.run_all(group_workflows, nb_procs, 'group')
+        self.run_all(group_workflows, nb_procs, 'group', data_desc.work_path, None)
 
         for hashconf in group_workflows.keys():
             self.file_srv.check_group_mask(data_desc, hashconf)
 
-    def run_all(self, workflows: dict, nb_procs, level: str):
+    def run_all(self, workflows: dict, nb_procs, level: str, work_path: str, workspace_sizes=None):
         if len(workflows) == 0:
             return
-        master = self.workflow_srv.build_master_workflow(workflows)
+
+        if workspace_sizes is None:
+            workspace_sizes = dict()
+
         start = time.perf_counter()
-        print(f"[LOG][RUN] Running [{len(workflows)}] {level}-level workflows on [{nb_procs}] cores...")
-        master.run(self.PLUGIN, plugin_args={'n_procs': nb_procs, 'raise_insufficient': False, 'maxtasksperchild': 1})
+        available_work_space = self.file_srv.get_storage_space(work_path)
+        print(f"[LOG][RUN] [{available_work_space / (1024 ** 3):.1} GB] available in workdir [{work_path}]")
+        batch = dict()
+        batch_space = 0
+        for hashconf in workflows.keys():
+            batch_space += workspace_sizes.get(hashconf, 0)
+            if batch_space > available_work_space and len(batch) > 0:
+                self.run_batch(batch, nb_procs, level)
+                self.file_srv.empty_path(work_path)
+                batch = dict()
+                batch_space = 0
+            else:
+                batch[hashconf] = workflows[hashconf]
+        self.run_batch(batch, nb_procs, level)
+        self.file_srv.empty_path(work_path)
+
         print(
             f"[LOG][RUN] [{len(workflows)}] {level}-level workflows finished - Elapsed time [{self.get_elapsed(start)}] - [{nb_procs}] cores")
+
+    def run_batch(self, batch: dict, nb_procs, level: str):
+        print(f"[LOG][RUN] Running [{len(batch)}] {level}-level workflows on [{nb_procs}] cores...")
+        master = self.workflow_srv.build_master_workflow(batch)
+        master.run(self.PLUGIN,
+                   plugin_args={'n_procs': nb_procs, 'raise_insufficient': False, 'maxtasksperchild': 1})
