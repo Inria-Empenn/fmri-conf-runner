@@ -228,10 +228,15 @@ class FileService:
             return
         path = Path(path)
         for child in path.iterdir():
-            if child.is_dir() and not child.is_symlink():
-                shutil.rmtree(child)
-            else:
-                child.unlink()
+            try:
+                if child.is_dir() and not child.is_symlink():
+                    shutil.rmtree(child)
+                else:
+                    child.unlink()
+            except (PermissionError, OSError) as e:
+                print(f"[LOG][WARN] [{child}] is busy or inaccessible, skipping: {e}")
+            except FileNotFoundError:
+                pass
         print(f"[LOG][FILE] [{path}] has been emptied")
 
 
