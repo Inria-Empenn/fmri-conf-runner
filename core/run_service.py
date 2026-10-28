@@ -111,7 +111,7 @@ class RunService:
 
         start = time.perf_counter()
         available_work_space = self.file_srv.get_storage_space(work_path)
-        print(f"[LOG][RUN] [{available_work_space / (1024 ** 3):.1} GB] available in workdir [{work_path}]")
+        print(f"[LOG][RUN] [{(available_work_space / (1024 ** 3)):.1f} GB] available in workdir [{work_path}]")
         batch = dict()
         batch_space = 0
         for hashconf in workflows.keys():
