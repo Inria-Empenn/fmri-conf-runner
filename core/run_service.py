@@ -52,7 +52,7 @@ class RunService:
             subjects[hashconf] = self.file_srv.filter_processed_subjects(data_desc, hashconf)
             workspace_sizes[hashconf] = self.file_srv.predict_config_workspace_size(subjects[hashconf], sub_sizes)
 
-        batches = self.get_batches(workspace_sizes, data_desc.work_path)
+        batches = self.get_batches(workspace_sizes, data_desc.work_path, subjects, nb_procs)
 
         total_configs = len(hash_configs)
         total_subs = len(data_desc.subjects)
@@ -120,21 +120,27 @@ class RunService:
             f"[LOG][RUN][batch-{batch_id}] [{len(workflows)}] {level}-level workflows finished - Elapsed time [{self.get_elapsed(start)}] - [{nb_procs}] cores")
 
 
-    def get_batches(self, workspace_sizes, work_path: str):
+    def get_batches(self, workspace_sizes: dict, work_path: str, subjects: dict, nb_procs: int):
         batches = dict()
-        available_work_space = self.file_srv.get_storage_space(work_path)
-        print(f"[LOG][RUN] [{(available_work_space / (1024 ** 3)):.1f} GB] available in workdir [{work_path}]")
+        workdir_space = self.file_srv.get_storage_space(work_path)
+        print(f"[LOG][RUN] [{(workdir_space / (1024 ** 3)):.1f} GB] available in workdir [{work_path}]")
         batch_id = 1
         batches[batch_id] = []
         batch_size = 0
+        available_procs = nb_procs
+        available_space = workdir_space
         for hashconf, conf_size in workspace_sizes.items():
-            print(f"[LOG][RUN] [{hashconf}] needs [{(conf_size / (1024 ** 3)):.1f}/{(available_work_space / (1024 ** 3)):.1f} GB]")
-            if not batches[batch_id] or batch_size + conf_size < available_work_space:
+            print(f"[LOG][RUN] [{hashconf}] needs up to [{(conf_size / (1024 ** 3)):.1f}/{(workdir_space / (1024 ** 3)):.1f} GB and [{len(subjects[hashconf])}] procs")
+            if not batches[batch_id] or (available_space > 0 and available_procs > 0):
                 batches[batch_id].append(hashconf)
             else:
-                batch_size = 0
                 batch_id+=1
+                batch_size = 0
+                available_procs = nb_procs
+                available_space = workdir_space
                 batches[batch_id].append(hashconf)
             batch_size += conf_size
+            available_procs -= len(subjects[hashconf])
+            available_space -= conf_size
         print(f"[LOG][RUN] Execution will be divided in [{len(batches)}] batches")
         return batches
