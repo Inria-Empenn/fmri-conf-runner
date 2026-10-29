@@ -128,6 +128,7 @@ class RunService:
         batches[batch_id] = []
         batch_size = 0
         for hashconf, conf_size in workspace_sizes.items():
+            print(f"[LOG][RUN] [{hashconf}] needs [{(conf_size / (1024 ** 3)):.1f}/{(available_work_space / (1024 ** 3)):.1f} GB]")
             if not batches[batch_id] or batch_size + conf_size < available_work_space:
                 batches[batch_id].append(hashconf)
             else:
