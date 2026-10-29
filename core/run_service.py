@@ -138,7 +138,7 @@ class RunService:
                 batch_size = 0
                 available_procs = nb_procs
                 available_space = workdir_space
-                batches[batch_id].append(hashconf)
+                batches[batch_id] = [hashconf]
             batch_size += conf_size
             available_procs -= len(subjects[hashconf])
             available_space -= conf_size
